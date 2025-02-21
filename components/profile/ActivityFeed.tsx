@@ -6,11 +6,11 @@ import { formatDistanceToNow } from 'date-fns';
 import React from 'react';
 
 interface Activity {
-	id: number;
+	id: string;
 	type: 'WATCHED' | 'REVIEWED' | 'CREATED_LIST';
 	show?: string;
 	timestamp: Date;
-	rating?: number;
+	rating?: number | null;
 	content?: string;
 	title?: string;
 	showCount?: number;

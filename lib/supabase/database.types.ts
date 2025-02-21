@@ -228,6 +228,41 @@ export type Database = {
           },
         ]
       }
+      user_stats: {
+        Row: {
+          completed_count: number | null
+          dropped_count: number | null
+          plan_to_watch_count: number | null
+          updated_at: string | null
+          user_id: string
+          watching_count: number | null
+        }
+        Insert: {
+          completed_count?: number | null
+          dropped_count?: number | null
+          plan_to_watch_count?: number | null
+          updated_at?: string | null
+          user_id: string
+          watching_count?: number | null
+        }
+        Update: {
+          completed_count?: number | null
+          dropped_count?: number | null
+          plan_to_watch_count?: number | null
+          updated_at?: string | null
+          user_id?: string
+          watching_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_stats_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       watch_history: {
         Row: {
           id: string

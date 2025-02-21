@@ -34,7 +34,7 @@ export function ProfileHeader({ user, stats }: ProfileHeaderProps) {
 					<h1 className="mb-2 bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 bg-clip-text text-2xl md:text-4xl font-black uppercase tracking-wider text-transparent">
 						{user.user_metadata.username}
 					</h1>
-					<p className="mb-4 font-mono text-gray-600">Joined Feb 2024</p>
+					<p className="mb-4 font-mono text-gray-600">Joined {new Date(user.created_at).toLocaleString('en-US', { year: 'numeric', month: 'short' })}</p>
 
 					{/* Quick Stats */}
 					<div className="flex flex-wrap justify-center gap-6 md:justify-start">

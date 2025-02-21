@@ -36,7 +36,7 @@ export function UserButton({ user }: UserButtonProps) {
 				<div className="absolute -inset-0.5 rounded-lg bg-gradient-to-r from-pink-400 via-purple-400 to-cyan-400 opacity-75 blur transition group-hover:opacity-100" />
 				<div className="relative flex items-center gap-2 rounded-lg border border-white/50 bg-white/90 px-4 py-2 font-bold tracking-wide">
 					<UserIcon className="h-5 w-5" />
-					{user.email?.split('@')[0].toUpperCase() ?? 'ACCOUNT'}
+					{user.user_metadata.username.toUpperCase() ?? 'ACCOUNT'}
 				</div>
 			</button>
 

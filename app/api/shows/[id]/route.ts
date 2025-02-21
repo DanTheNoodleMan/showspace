@@ -25,8 +25,6 @@ export async function GET(request: Request, { params }: RouteParams) {
 		// Get show details from TMDB
 		const tmdbShow = await tmdbService.getShowDetails(tmdbId);
 
-        console.log(tmdbShow);
-
 		// If user is logged in, get their data for this show
 		let userData = null;
 		if (userId) {

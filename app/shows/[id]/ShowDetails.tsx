@@ -21,6 +21,7 @@ import {
 import { getTMDBImageUrl } from '@/config/tmdb';
 import { formatDistanceToNow } from 'date-fns';
 import { ShowSkeleton } from './ShowSkeleton';
+import { WatchStatus } from '@/components/shows/WatchStatus';
 import Link from 'next/link';
 
 interface ShowDetailsProps {
@@ -128,7 +129,7 @@ export function ShowDetails({ showId }: ShowDetailsProps) {
 						<div className="mb-4">
 							<button
 								onClick={() => setShowSpoilers(!showSpoilers)}
-								className="mb-2 flex items-center gap-2 rounded-lg border-2 border-purple-300 bg-white/50 px-4 py-2 font-bold text-purple-600 transition hover:bg-purple-100"
+								className="mb-2 flex items-center gap-2 rounded-lg border-2 border-purple-300 bg-white/50 px-4 py-2 font-bold text-purple-600 transition hover:bg-purple-100 cursor-pointer"
 							>
 								{showSpoilers ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
 								{showSpoilers ? 'Hide Spoilers' : 'Show Spoilers'}
@@ -187,6 +188,27 @@ export function ShowDetails({ showId }: ShowDetailsProps) {
 							</div>
 						</div>
 
+						{/* Watch Status */}
+						<div className="mb-4">
+							<h3 className="mb-2 font-bold text-purple-600">Watch Status</h3>
+							<WatchStatus
+								showId={show.id}
+								initialStatus={show.userData?.watchStatus?.status}
+								onStatusChange={(newStatus) => {
+									// Optionally update local state if needed
+									setShow((prev: { userData: { watchStatus: any } }) => ({
+										...prev,
+										userData: {
+											...prev.userData,
+											watchStatus: {
+												...prev.userData?.watchStatus,
+												status: newStatus,
+											},
+										},
+									}));
+								}}
+							/>
+						</div>
 						{/* Watch Info */}
 						<div className="mt-auto grid grid-cols-1 gap-4 md:grid-cols-2">
 							{/* Binge Time */}

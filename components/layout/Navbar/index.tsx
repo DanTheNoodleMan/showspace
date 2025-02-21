@@ -55,7 +55,7 @@ export function Navbar() {
 				{/* Logo */}
 				<div className="flex items-center gap-2">
 					<span className="bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 bg-clip-text text-lg md:text-3xl font-black uppercase tracking-wider text-transparent">
-						SHOWSPACE_2000
+						SHOWSPACE
 					</span>
 				</div>
 
