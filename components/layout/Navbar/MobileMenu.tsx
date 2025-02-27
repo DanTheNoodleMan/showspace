@@ -3,12 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X, LogOut, User as UserIcon, Settings, List, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 import { NavLink } from './NavLink';
-import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter, usePathname } from 'next/navigation';
 import { MobileMenuProps } from '@/types/navbar';
 
-const PATHS_WITH_LOADING_OVERLAY = ['/profile', '/lists', '/settings', 'login', '/signup'];
+const PATHS_WITH_LOADING_OVERLAY = ['/profile', '/lists', '/settings', '/login', '/signup'];
+
+// Safety timeout to prevent infinite loading state (in milliseconds)
+const LOADING_TIMEOUT = 3000;
 
 export function MobileMenu({ isOpen, onToggle, links, user }: MobileMenuProps) {
 	const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -71,6 +73,12 @@ export function MobileMenu({ isOpen, onToggle, links, user }: MobileMenuProps) {
 
 	// Wrapper for navigation links to handle closing and loading state
 	const handleNavigation = (href: string) => {
+		// Skip if already on the same page
+		if (pathname === href) {
+			onToggle(); // Just close the menu
+			return;
+		}
+
 		// Always close the menu
 		onToggle();
 
@@ -78,6 +86,14 @@ export function MobileMenu({ isOpen, onToggle, links, user }: MobileMenuProps) {
 		if (shouldShowLoadingFor(href)) {
 			setIsNavigating(true);
 			setNavigatingPath(href);
+
+			// Safety timeout to prevent infinite loading state
+			// This will clear the loading state after a set time
+			// in case navigation doesn't trigger a path change
+			setTimeout(() => {
+				setIsNavigating(false);
+				setNavigatingPath(null);
+			}, LOADING_TIMEOUT);
 		}
 
 		// Navigate
