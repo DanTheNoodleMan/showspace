@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { Menu, X, LogOut, User as UserIcon, Settings, List, ChevronDown, ChevronUp } from 'lucide-react';
 import { NavLink } from './NavLink';
 import Link from 'next/link';
-import { UserButton } from './UserButton';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { MobileMenuProps } from '@/types/navbar';

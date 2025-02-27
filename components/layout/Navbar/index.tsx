@@ -1,7 +1,6 @@
 // src/components/layout/Navbar/index.tsx
 'use client';
 import React, { useState, useEffect } from 'react';
-import { StarBurst } from './StarBurst';
 import { NavLink } from './NavLink';
 import { MobileMenu } from './MobileMenu';
 import { UserButton } from './UserButton';
@@ -29,9 +28,9 @@ export function Navbar() {
 	const supabase = createClient();
 
 	useEffect(() => {
-		// Get initial session
-		supabase.auth.getSession().then(({ data: { session } }) => {
-			setUser(session?.user ?? null);
+		// Get and validate user
+		supabase.auth.getUser().then(({ data }) => {
+			setUser(data?.user ?? null);
 		});
 
 		// Listen for auth changes
@@ -42,7 +41,7 @@ export function Navbar() {
 		});
 
 		return () => subscription.unsubscribe();
-	}, []);
+	}, [supabase.auth]);
 
 	// Create a mutable copy of the links array based on auth state
 	const links: NavLinkType[] = [...(user ? NAV_LINKS.authenticated : NAV_LINKS.public)];
