@@ -4,6 +4,7 @@ import { GridBackground } from '@/components/shared/GridBackground';
 import { HeroSection } from '@/components/home/HeroSection';
 import { ShowCarousel } from '@/components/home/ShowCarousel';
 import { FeatureCard } from '@/components/home/FeatureCard';
+import { DailyTrailerPromo } from '@/components/daily-trailer/DailyTrailerPromo';
 import { BookMarked, List, User } from 'lucide-react';
 
 const FEATURES = [
@@ -35,6 +36,13 @@ export default function HomePage() {
 			{/* Content Layer */}
 			<div className="relative z-10 flex flex-col gap-16 px-4 pb-16 pt-8 sm:px-6 lg:px-8">
 				<HeroSection />
+
+				{/* Daily Trailer Game Promo */}
+				<section className="px-4 sm:px-6 lg:px-8">
+					<div className="mx-auto max-w-7xl">
+						<DailyTrailerPromo />
+					</div>
+				</section>
 
 				{/* Trending Shows */}
 				<section className="px-4 py-12 sm:px-6 lg:px-8">

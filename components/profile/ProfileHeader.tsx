@@ -1,7 +1,7 @@
 // /components/profile/ProfileHeader.tsx
 'use client';
 import { User } from '@supabase/supabase-js';
-import { Star, Clapperboard, ListChecks } from 'lucide-react';
+import { Star, Clapperboard, ListChecks, Trophy } from 'lucide-react';
 
 interface ProfileHeaderProps {
 	user: User;
@@ -12,6 +12,7 @@ interface ProfileHeaderProps {
 		followers: number;
 		following: number;
 		reviewsWritten: number;
+		currentStreak: number;
 	};
 }
 
@@ -34,7 +35,9 @@ export function ProfileHeader({ user, stats }: ProfileHeaderProps) {
 					<h1 className="mb-2 bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 bg-clip-text text-2xl md:text-4xl font-black uppercase tracking-wider text-transparent">
 						{user.user_metadata.username}
 					</h1>
-					<p className="mb-4 font-mono text-gray-600">Joined {new Date(user.created_at).toLocaleString('en-US', { year: 'numeric', month: 'short' })}</p>
+					<p className="mb-4 font-mono text-gray-600">
+						Joined {new Date(user.created_at).toLocaleString('en-US', { year: 'numeric', month: 'short' })}
+					</p>
 
 					{/* Quick Stats */}
 					<div className="flex flex-wrap justify-center gap-6 md:justify-start">
@@ -49,6 +52,10 @@ export function ProfileHeader({ user, stats }: ProfileHeaderProps) {
 						<div className="flex items-center gap-2">
 							<ListChecks className="h-5 w-5 text-purple-500" />
 							<span className="font-bold">{stats.listsCreated} Lists</span>
+						</div>
+						<div className="flex items-center gap-2">
+							<Trophy className="h-5 w-5 text-purple-500" />
+							<span className="font-bold">Streak: {stats.currentStreak} </span>
 						</div>
 					</div>
 				</div>

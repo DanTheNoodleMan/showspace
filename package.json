@@ -14,9 +14,10 @@
     "@tailwindcss/postcss": "^4.0.6",
     "country-flag-icons": "^1.5.16",
     "date-fns": "^4.1.0",
-    "framer-motion": "^12.4.5",
+    "framer-motion": "^12.4.7",
     "lucide-react": "^0.475.0",
     "next": "15.1.7",
+    "rc-slider": "^11.1.8",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tailwindcss": "^4.0.6"

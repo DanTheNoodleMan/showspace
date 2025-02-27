@@ -61,6 +61,7 @@ export async function GET() {
 			followers: followers?.length ?? 0,
 			following: following?.length ?? 0,
 			reviewsWritten: reviews?.length ?? 0,
+			currentStreak: profile?.current_streak ?? 0,
 		};
 
 		return NextResponse.json({

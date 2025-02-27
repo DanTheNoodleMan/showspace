@@ -17,8 +17,7 @@ const NAV_LINKS = {
 	],
 	authenticated: [
 		{ href: '/', label: 'HOME' },
-		{ href: '/shows', label: 'SHOWS' },
-		{ href: '/discover', label: 'DISCOVER' },
+		{ href: '/daily-trailer', label: 'DAILY GAME' },
 		{ href: '/lists', label: 'MY LISTS' },
 	],
 } as const;

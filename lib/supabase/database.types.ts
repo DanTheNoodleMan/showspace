@@ -9,6 +9,47 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      daily_game_guesses: {
+        Row: {
+          actual_rating: number
+          created_at: string | null
+          difference: number
+          guess: number
+          id: string
+          movie_id: number
+          result: string
+          user_id: string
+        }
+        Insert: {
+          actual_rating: number
+          created_at?: string | null
+          difference: number
+          guess: number
+          id?: string
+          movie_id: number
+          result: string
+          user_id: string
+        }
+        Update: {
+          actual_rating?: number
+          created_at?: string | null
+          difference?: number
+          guess?: number
+          id?: string
+          movie_id?: number
+          result?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_game_guesses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       followers: {
         Row: {
           created_at: string
@@ -120,6 +161,7 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           created_at: string
+          current_streak: number
           display_name: string | null
           id: string
           updated_at: string
@@ -129,6 +171,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
+          current_streak?: number
           display_name?: string | null
           id: string
           updated_at?: string
@@ -138,6 +181,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
+          current_streak?: number
           display_name?: string | null
           id?: string
           updated_at?: string
@@ -344,7 +388,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      reset_missing_daily_players: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
