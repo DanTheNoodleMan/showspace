@@ -1,6 +1,6 @@
-// src/services/daily-trailer.ts
-
+// /services/daily-trailer.ts
 import { TMDB_CONFIG } from '@/config/tmdb';
+import { createClient } from '@/lib/supabase/server';
 
 interface TMDBMovieVideo {
 	id: string;
@@ -10,19 +10,75 @@ interface TMDBMovieVideo {
 	type: string;
 }
 
-// This function deterministically selects a movie based on the date
-export async function getDailyMovie() {
-	// Use today's date to seed the random selection
-	const today = new Date();
-	const dateString = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
+interface DailyMovie {
+	id: number;
+	title: string;
+	trailerKey: string;
+	rating: number;
+	releaseDate: string;
+	posterPath: string | null;
+	dateFor: string;
+}
 
+// Gets the daily movie trailer challenge for the current user's local date
+export async function getDailyMovie(): Promise<DailyMovie> {
+	const supabase = await createClient();
+
+	const today = new Date();
+	const localDateString = today.toISOString().split('T')[0]; // YYYY-MM-DD format
+
+	// Check if we already have a movie for today in our history
+	const { data: existingMovie } = await supabase
+		.from('daily_movie_history')
+		.select('movie_id, movie_title, trailer_key, rating, release_date, poster_path')
+		.eq('shown_date', localDateString)
+		.single();
+
+	if (existingMovie) {
+		return {
+			id: existingMovie.movie_id,
+			title: existingMovie.movie_title,
+			trailerKey: existingMovie.trailer_key,
+			rating: existingMovie.rating,
+			releaseDate: existingMovie.release_date,
+			posterPath: existingMovie.poster_path,
+			dateFor: localDateString,
+		};
+	}
+	// If no existing movie select a new movie for today
+	const movie = await selectDailyMovie(localDateString);
+
+	// Store this movie in our history
+	await supabase.from('daily_movie_history').insert({
+		movie_id: movie.id,
+		movie_title: movie.title,
+		trailer_key: movie.trailerKey,
+		rating: movie.rating,
+		release_date: movie.releaseDate,
+		poster_path: movie.posterPath,
+		shown_date: localDateString,
+	});
+
+	return movie;
+}
+async function selectDailyMovie(dateString: string): Promise<DailyMovie> {
 	// Simple hash function to generate a number from the date string
 	const hash = dateString.split('').reduce((acc, char) => {
 		return char.charCodeAt(0) + ((acc << 5) - acc);
 	}, 0);
 
-	// Use the hash to select a page of popular movies
-	const page = Math.abs(hash % 20) + 1; // Get a page between 1 and 20
+	// Get a list of movie IDs we've shown in the last 100 days to avoid repeats
+	const supabase = await createClient();
+	const { data: recentMovies } = await supabase
+		.from('daily_movie_history')
+		.select('movie_id')
+		.order('shown_date', { ascending: false })
+		.limit(100);
+
+	const recentMovieIds = recentMovies?.map((m) => m.movie_id) || [];
+
+	// Use the hash to select a page of popular movies (between 1 and 50)
+	const page = Math.abs(hash % 50) + 1;
 
 	// Fetch a page of popular movies
 	const movieListResponse = await fetch(`${TMDB_CONFIG.baseUrl}/movie/popular?language=en-US&page=${page}`, {
@@ -38,13 +94,16 @@ export async function getDailyMovie() {
 
 	const movieList = await movieListResponse.json();
 
-	console.log('movieList', movieList);
+	// Filter out any movies we've shown recently
+	const eligibleMovies = movieList.results.filter((movie: any) => !recentMovieIds.includes(movie.id));
 
-	// Use the hash to select a movie from the page
-	const movieIndex = Math.abs(hash) % movieList.results.length;
-	const selectedMovie = movieList.results[movieIndex];
+	// If we somehow have no eligible movies, use the original list
+	const moviesPool = eligibleMovies.length > 0 ? eligibleMovies : movieList.results;
 
-	// Fetch trailer for the selected movie
+	// Use the hash to select a movie from the filtered list
+	const movieIndex = Math.abs(hash) % moviesPool.length;
+	const selectedMovie = moviesPool[movieIndex];
+
 	const videoResponse = await fetch(`${TMDB_CONFIG.baseUrl}/movie/${selectedMovie.id}/videos?language=en-US`, {
 		headers: {
 			Authorization: `Bearer ${TMDB_CONFIG.apiToken}`,
@@ -57,18 +116,15 @@ export async function getDailyMovie() {
 	}
 
 	const videoList = await videoResponse.json();
-	console.log('videoList', videoList);
 
-	// Find a trailer in the results
+	// Find a trailer in the results since it returns different types of videos
 	const trailer =
 		videoList.results.find((video: TMDBMovieVideo) => video.type === 'Trailer' && video.site === 'YouTube') || videoList.results[0];
 
-	console.log('trailer', trailer);
 	if (!trailer) {
 		throw new Error("No trailer found for today's movie");
 	}
 
-	// Scale the rating from 0-10 to 0-100
 	const rating = Math.round(selectedMovie.vote_average * 10);
 
 	return {
@@ -78,5 +134,19 @@ export async function getDailyMovie() {
 		rating,
 		releaseDate: selectedMovie.release_date,
 		posterPath: selectedMovie.poster_path,
+		dateFor: dateString,
 	};
+}
+ // Gets the countdown time until the next daily trailer (local midnight)
+export function getTimeUntilNextTrailer(): { hours: number; minutes: number } {
+	const now = new Date();
+	const tomorrow = new Date(now);
+	tomorrow.setDate(tomorrow.getDate() + 1);
+	tomorrow.setHours(0, 0, 0, 0);
+
+	const diffMs = tomorrow.getTime() - now.getTime();
+	const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+	const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+	return { hours: diffHrs, minutes: diffMins };
 }

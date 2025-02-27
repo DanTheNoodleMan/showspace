@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { LoadingButton } from '@/components/ui/loading-button';
 
 interface AuthFormProps {
 	type: 'login' | 'signup';
@@ -76,6 +77,7 @@ export function AuthForm({ type }: AuthFormProps) {
 							onChange={(e) => setUsername(e.target.value)}
 							className="w-full rounded-lg border-2 border-purple-200 bg-white/50 p-2 focus:border-purple-400 focus:outline-none"
 							required
+							disabled={loading}
 						/>
 					</div>
 				)}
@@ -91,6 +93,7 @@ export function AuthForm({ type }: AuthFormProps) {
 						onChange={(e) => setEmail(e.target.value)}
 						className="w-full rounded-lg border-2 border-purple-200 bg-white/50 p-2 focus:border-purple-400 focus:outline-none"
 						required
+						disabled={loading}
 					/>
 				</div>
 
@@ -105,20 +108,22 @@ export function AuthForm({ type }: AuthFormProps) {
 						onChange={(e) => setPassword(e.target.value)}
 						className="w-full rounded-lg border-2 border-purple-200 bg-white/50 p-2 focus:border-purple-400 focus:outline-none"
 						required
+						disabled={loading}
 					/>
 				</div>
 
 				{error && <div className="rounded-lg bg-red-100 p-3 text-sm text-red-600">{error}</div>}
 
-				<button
+				<LoadingButton
 					type="submit"
+					isLoading={loading}
+					loadingText={type === 'login' ? 'Logging In...' : 'Signing Up...'}
+					variant="gradient"
+					className="w-full cursor-pointer"
 					disabled={loading}
-					className="group relative w-full overflow-hidden rounded-lg bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 p-0.5 focus:outline-none cursor-pointer"
 				>
-					<span className="relative block rounded-md bg-white px-8 py-3 text-center font-bold tracking-wide text-gray-900 transition group-hover:bg-transparent group-hover:text-white">
-						{loading ? 'Loading...' : type === 'login' ? 'Log In' : 'Sign Up'}
-					</span>
-				</button>
+					{type === 'login' ? 'Log In' : 'Sign Up'}
+				</LoadingButton>
 
 				<p className="text-center text-sm text-gray-600">
 					{type === 'login' ? (

@@ -6,6 +6,12 @@ import { ActivityFeed } from '@/components/profile/ActivityFeed';
 import { redirect } from 'next/navigation';
 import { GridBackground } from '@/components/shared/GridBackground';
 import { headers } from 'next/headers';
+import { Suspense } from 'react';
+import { ProfileSkeleton } from '@/components/profile/ProfileSkeleton';
+
+// This helps Next.js optimize and not show stale data
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export default async function ProfilePage() {
 	const supabase = await createClient();
@@ -19,6 +25,22 @@ export default async function ProfilePage() {
 		redirect('/login');
 	}
 
+	// Wrap data fetching in Suspense boundaries for more granular loading states
+	return (
+		<div className="min-h-screen bg-gradient-to-b from-pink-100 via-purple-100 to-cyan-100 pt-8">
+			<div className="absolute inset-0">
+				<GridBackground />
+			</div>
+			<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+				<Suspense fallback={<ProfileSkeleton />}>
+					<ProfileContent userId={user.id} user={user} />
+				</Suspense>
+			</div>
+		</div>
+	);
+}
+
+async function ProfileContent({ userId, user }: { userId: string; user: any }) {
 	// Fetch profile data from our new API endpoint
 	const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/profile`, {
 		headers: {
@@ -33,19 +55,19 @@ export default async function ProfilePage() {
 	const { profile, stats } = await response.json();
 
 	// First fetch watch history
+	const supabase = await createClient();
 	const { data: watchHistory } = await supabase
 		.from('watch_history')
 		.select('*')
-		.eq('user_id', user.id)
+		.eq('user_id', userId)
 		.order('watched_at', { ascending: false })
 		.limit(10);
 
-		console.log("Watch History", watchHistory);
 	// Then fetch recent reviews
 	const { data: reviews } = await supabase
 		.from('reviews')
 		.select('*')
-		.eq('user_id', user.id)
+		.eq('user_id', userId)
 		.eq('content_type', 'show')
 		.order('created_at', { ascending: false })
 		.limit(10);
@@ -72,20 +94,13 @@ export default async function ProfilePage() {
 		// Take only the 10 most recent activities
 		.slice(0, 10);
 
-		console.log(activities);
-
 	return (
-		<div className="min-h-screen bg-gradient-to-b from-pink-100 via-purple-100 to-cyan-100 pt-8">
-			<div className="absolute inset-0">
-				<GridBackground />
+		<>
+			<ProfileHeader user={user} stats={stats} />
+			<div className="mt-8 grid gap-8 lg:grid-cols-3">
+				<StatsGrid stats={stats} className="lg:col-span-1" />
+				<ActivityFeed activities={activities} className="lg:col-span-2" />
 			</div>
-			<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-				<ProfileHeader user={user} stats={stats} />
-				<div className="mt-8 grid gap-8 lg:grid-cols-3">
-					<StatsGrid stats={stats} className="lg:col-span-1" />
-					<ActivityFeed activities={activities} className="lg:col-span-2" />
-				</div>
-			</div>
-		</div>
+		</>
 	);
 }

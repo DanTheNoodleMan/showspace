@@ -68,7 +68,7 @@ export function UserButton({ user }: UserButtonProps) {
 					<hr className="my-2 border-purple-100" />
 					<button
 						onClick={handleSignOut}
-						className="flex w-full items-center gap-2 rounded-lg px-4 py-2 text-left font-bold tracking-wide text-red-600 transition hover:bg-red-50"
+						className="flex w-full items-center gap-2 rounded-lg px-4 py-2 text-left font-bold tracking-wide text-red-600 transition hover:bg-red-50 cursor-pointer"
 					>
 						<LogOut className="h-5 w-5" />
 						Sign Out

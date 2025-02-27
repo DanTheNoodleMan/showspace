@@ -50,6 +50,42 @@ export type Database = {
           },
         ]
       }
+      daily_movie_history: {
+        Row: {
+          created_at: string | null
+          id: string
+          movie_id: number
+          movie_title: string
+          poster_path: string | null
+          rating: number
+          release_date: string
+          shown_date: string
+          trailer_key: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          movie_id: number
+          movie_title: string
+          poster_path?: string | null
+          rating: number
+          release_date: string
+          shown_date: string
+          trailer_key: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          movie_id?: number
+          movie_title?: string
+          poster_path?: string | null
+          rating?: number
+          release_date?: string
+          shown_date?: string
+          trailer_key?: string
+        }
+        Relationships: []
+      }
       followers: {
         Row: {
           created_at: string
