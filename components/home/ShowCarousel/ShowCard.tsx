@@ -23,7 +23,10 @@ export const ShowCard = ({ show }: ShowCardProps) => {
 	};
 
 	return (
-		<div className="group relative cursor-pointer" onClick={() => router.push(`/shows/${show.id}`)}>
+		<div className="group relative cursor-pointer" onClick={() => {
+			router.push(`/shows/${show.id}`);
+			window.scrollTo(0, 0);
+		}}>
 			{/* Glow effect */}
 			<div className="absolute -inset-1 rounded-xl bg-gradient-to-r from-pink-400 via-purple-400 to-cyan-400 opacity-75 blur transition duration-300 ease-in-out group-hover:opacity-100 group-hover:blur-md" />
 
