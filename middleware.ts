@@ -37,7 +37,13 @@ export async function middleware(request: NextRequest) {
 	// Protected routes
 	const protectedRoutes = ['/lists', '/settings', '/profile', '/discover'];
 
-	if (!user && protectedRoutes.some((route) => request.nextUrl.pathname.startsWith(route))) {
+	// Explicitly allow public routes, including show details
+	const publicRoutes = ['/shows'];
+
+	// Check if the current path is in the public routes list
+	const isPublicRoute = publicRoutes.some((route) => request.nextUrl.pathname.startsWith(route));
+
+	if (!user && !isPublicRoute && protectedRoutes.some((route) => request.nextUrl.pathname.startsWith(route))) {
 		// Redirect to login if accessing protected route without user
 		const redirectUrl = new URL('/login', request.url);
 		redirectUrl.searchParams.set('redirectTo', request.nextUrl.pathname);

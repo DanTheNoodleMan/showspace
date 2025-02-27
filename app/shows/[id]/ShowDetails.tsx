@@ -22,7 +22,9 @@ import { getTMDBImageUrl } from '@/config/tmdb';
 import { formatDistanceToNow } from 'date-fns';
 import { ShowSkeleton } from './ShowSkeleton';
 import { WatchStatus } from '@/components/shows/WatchStatus';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface ShowDetailsProps {
 	showId: string;
@@ -49,6 +51,7 @@ export function ShowDetails({ showId }: ShowDetailsProps) {
 	const [error, setError] = useState<string | null>(null);
 	const [expandedSeasons, setExpandedSeasons] = useState<Record<number, boolean>>({});
 	const [showSpoilers, setShowSpoilers] = useState(false);
+	const router = useRouter();
 
 	useEffect(() => {
 		async function fetchShow() {
@@ -196,16 +199,28 @@ export function ShowDetails({ showId }: ShowDetailsProps) {
 								initialStatus={show.userData?.watchStatus?.status}
 								onStatusChange={(newStatus) => {
 									// Optionally update local state if needed
-									setShow((prev: { userData: { watchStatus: any } }) => ({
-										...prev,
-										userData: {
-											...prev.userData,
-											watchStatus: {
-												...prev.userData?.watchStatus,
-												status: newStatus,
+									if (show.userData) {
+										setShow((prev: any) => ({
+											...prev,
+											userData: {
+												...prev.userData,
+												watchStatus: {
+													...prev.userData?.watchStatus,
+													status: newStatus,
+												},
 											},
-										},
-									}));
+										}));
+									} else {
+										// If userData doesn't exist yet, create it
+										setShow((prev: any) => ({
+											...prev,
+											userData: {
+												watchStatus: { status: newStatus },
+												review: null,
+												episodeRatings: {},
+											},
+										}));
+									}
 								}}
 							/>
 						</div>
@@ -271,77 +286,186 @@ export function ShowDetails({ showId }: ShowDetailsProps) {
 				{show.seasons?.map((season: any) => (
 					<div
 						key={season.id}
-						className="rounded-xl border-4 border-white/50 bg-gradient-to-r from-pink-200 via-purple-200 to-cyan-200 shadow-xl backdrop-blur-lg"
+						className="rounded-xl border-4 border-white/50 bg-gradient-to-r from-pink-200 via-purple-200 to-cyan-200 shadow-xl backdrop-blur-lg overflow-hidden"
 					>
 						{/* Season Header */}
-						<button onClick={() => toggleSeason(season.season_number)} className="flex w-full items-center justify-between p-6">
+						<motion.button
+							onClick={() => toggleSeason(season.season_number)}
+							className="flex w-full items-center justify-between p-6 cursor-pointer"
+							whileHover={{
+								backgroundColor: 'rgba(255, 255, 255, 0.2)',
+								transition: { duration: 0.2 },
+							}}
+							whileTap={{ scale: 0.98 }}
+						>
 							<div className="flex items-center gap-4">
-								<img
-									src={getTMDBImageUrl(season.poster_path, 'poster', 'small')!}
-									alt={season.title}
-									className="h-20 w-14 rounded-lg object-cover"
-								/>
-								<div>
-									<h3 className="text-xl font-bold">{season.name}</h3>
-									<p className="font-mono text-gray-600">{season.episode_count} Episodes</p>
-								</div>
-							</div>
-							{expandedSeasons[season.season_number] ? (
-								<ChevronUp className="h-6 w-6" />
-							) : (
-								<ChevronDown className="h-6 w-6" />
-							)}
-						</button>
-
-						{/* Episodes List */}
-						{expandedSeasons[season.season_number] && (
-							<div className="border-t-2 border-white/50 p-6">
-								<div className="grid gap-4">
-									{season.episodes?.map((episode: any) => (
-										<div
-											key={episode.id}
-											className="group relative rounded-lg border-2 border-white/50 bg-white/50 p-4 backdrop-blur-sm"
+								<motion.div whileHover={{ scale: 1.05 }} className="relative">
+									<motion.div
+										initial={false}
+										animate={{
+											boxShadow: expandedSeasons[season.season_number]
+												? '0 0 10px 2px rgba(168, 85, 247, 0.5)'
+												: '0 0 0px 0px rgba(168, 85, 247, 0)',
+										}}
+										className="relative rounded-lg overflow-hidden"
+									>
+										<img
+											src={getTMDBImageUrl(season.poster_path, 'poster', 'small')!}
+											alt={season.name}
+											className="h-20 w-14 rounded-lg object-cover"
+										/>
+									</motion.div>
+									{expandedSeasons[season.season_number] && (
+										<motion.div
+											initial={{ opacity: 0, scale: 0 }}
+											animate={{ opacity: 1, scale: 1 }}
+											className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-purple-500 text-xs font-bold text-white"
 										>
-											<div className="flex items-center justify-between">
-												<div>
-													<h4 className="font-bold">
-														Episode {episode.episode_number} {showSpoilers ? `: ${episode.name}` : ''}
-													</h4>
-													{showSpoilers && (
-														<p className="mt-2 font-mono text-sm text-gray-600">{episode.overview}</p>
-													)}
-												</div>
-												<div className="flex items-center gap-2">
-													{/* Quick Rating */}
-													<div className="flex items-center">
-														{[1, 2, 3, 4, 5].map((rating) => (
-															<button
-																key={rating}
-																className="p-1 transition hover:scale-110"
-																onClick={() => {
-																	// TODO: Implement rating
-																	console.log(
-																		`Rate episode ${episode.episode_number} with ${rating} stars`
-																	);
-																}}
-															>
-																<Star
-																	className={`h-5 w-5 ${
-																		rating <= (episode.userRating || 0)
-																			? 'fill-yellow-400 text-yellow-400'
-																			: 'text-gray-300'
-																	}`}
-																/>
-															</button>
-														))}
-													</div>
-												</div>
-											</div>
-										</div>
-									))}
+											{season.episode_count}
+										</motion.div>
+									)}
+								</motion.div>
+								<div>
+									<motion.h3
+										initial={false}
+										animate={{
+											color: expandedSeasons[season.season_number] ? '#6D28D9' : '#1F2937',
+										}}
+										className="text-xl font-bold"
+									>
+										{season.name}
+									</motion.h3>
+									<motion.p
+										className="font-mono text-gray-600"
+										initial={false}
+										animate={{
+											color: expandedSeasons[season.season_number] ? '#8B5CF6' : '#4B5563',
+										}}
+									>
+										{season.episode_count} Episodes
+									</motion.p>
 								</div>
 							</div>
-						)}
+							<motion.div
+								initial={false}
+								animate={{
+									rotate: expandedSeasons[season.season_number] ? 180 : 0,
+									color: expandedSeasons[season.season_number] ? '#8B5CF6' : '#4B5563',
+								}}
+								transition={{ duration: 0.3, ease: 'easeInOut' }}
+							>
+								<ChevronDown className="h-6 w-6" />
+							</motion.div>
+						</motion.button>
+
+						{/* Episodes List with Animation */}
+						<AnimatePresence initial={false}>
+							{expandedSeasons[season.season_number] && (
+								<motion.div
+									key={`season-${season.season_number}-content`}
+									initial="collapsed"
+									animate="expanded"
+									exit="collapsed"
+									variants={{
+										expanded: { height: 'auto', opacity: 1 },
+										collapsed: { height: 0, opacity: 0 },
+									}}
+									transition={{ duration: 0.4, ease: 'easeInOut' }}
+									className="overflow-hidden border-t-2 border-white/50"
+								>
+									<div className="p-6">
+										<div className="grid gap-4">
+											{season.episodes?.map((episode: any, index: number) => (
+												<motion.div
+													key={episode.id}
+													initial={{ opacity: 0, y: 10 }}
+													animate={{ opacity: 1, y: 0 }}
+													transition={{ delay: index * 0.05, duration: 0.3 }}
+													className="group relative rounded-lg border-2 border-white/50 bg-white/50 p-4 backdrop-blur-sm"
+													whileHover={{
+														backgroundColor: 'rgba(233, 213, 255, 0.5)',
+														borderColor: '#A78BFA',
+														scale: 1.01,
+													}}
+												>
+													<div className="flex items-center justify-between">
+														<div className="flex-1">
+															<h4 className="font-bold group-hover:text-purple-700 transition-colors">
+																Episode {episode.episode_number} {showSpoilers ? `: ${episode.name}` : ''}
+															</h4>
+															{showSpoilers && (
+																<motion.p
+																	initial={{ opacity: 0 }}
+																	animate={{ opacity: 1 }}
+																	transition={{ delay: 0.2 }}
+																	className="mt-2 font-mono text-sm text-gray-600"
+																>
+																	{episode.overview || 'No description available.'}
+																</motion.p>
+															)}
+
+															{/* Add runtime information if available */}
+															{episode.runtime && (
+																<motion.div
+																	initial={{ opacity: 0 }}
+																	animate={{ opacity: 1 }}
+																	transition={{ delay: 0.1 }}
+																	className="mt-1 flex items-center text-xs text-gray-500"
+																>
+																	<Clock className="mr-1 h-3 w-3" />
+																	<span>{episode.runtime} min</span>
+																</motion.div>
+															)}
+														</div>
+														<div className="flex items-center gap-2">
+															{/* Quick Rating */}
+															<div className="flex items-center">
+																{[1, 2, 3, 4, 5].map((rating) => (
+																	<motion.button
+																		key={rating}
+																		whileHover={{
+																			scale: 1.3,
+																			color: '#FBBF24',
+																			transition: { duration: 0.15 },
+																		}}
+																		whileTap={{ scale: 0.9 }}
+																		className="p-1 transition"
+																		onClick={(e) => {
+																			e.stopPropagation(); // Prevent season toggle
+																			// Check if user is logged in
+																			if (!show.userData) {
+																				router.push(`/login?redirectTo=/shows/${show.id}`);
+																				return;
+																			}
+
+																			// TODO: Implement rating
+																			console.log(
+																				`Rate episode ${episode.episode_number} with ${rating} stars`
+																			);
+																		}}
+																	>
+																		<Star
+																			className={`h-5 w-5 transition-all duration-200 ${
+																				rating <= (episode.userRating || 0)
+																					? 'fill-yellow-400 text-yellow-400'
+																					: rating <= (episode.userRating || 0) + 1 &&
+																					  episode.userRating
+																					? 'fill-yellow-200 text-yellow-200' // Subtle highlight for star next to rating
+																					: 'text-gray-300 group-hover:text-gray-400'
+																			}`}
+																		/>
+																	</motion.button>
+																))}
+															</div>
+														</div>
+													</div>
+												</motion.div>
+											))}
+										</div>
+									</div>
+								</motion.div>
+							)}
+						</AnimatePresence>
 					</div>
 				))}
 			</div>

@@ -1,106 +1,128 @@
-// components/shows/WatchStatus.tsx
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Eye, Clock, Check, X } from 'lucide-react';
-import { Database } from '@/lib/supabase/database.types';
-
-type WatchStatus = Database['public']['Tables']['watch_status']['Row']['status'];
+import { Loader2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 interface WatchStatusProps {
 	showId: number;
-	initialStatus?: WatchStatus;
-	onStatusChange?: (newStatus: WatchStatus) => void;
+	initialStatus?: string;
+	onStatusChange?: (newStatus: string) => void;
 }
 
-const WATCH_STATUSES = [
-	{ value: 'watching', label: 'Watching', icon: Eye },
-	{ value: 'completed', label: 'Completed', icon: Check },
-	{ value: 'plan_to_watch', label: 'Plan to Watch', icon: Clock },
-	{ value: 'dropped', label: 'Dropped', icon: X },
-] as const;
-
 export function WatchStatus({ showId, initialStatus, onStatusChange }: WatchStatusProps) {
-	const [status, setStatus] = useState<WatchStatus | undefined>(initialStatus);
+	const [status, setStatus] = useState(initialStatus || '');
 	const [isLoading, setIsLoading] = useState(false);
-	const [error, setError] = useState<string | null>(null);
+	const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+	const router = useRouter();
 	const supabase = createClient();
 
-	const updateWatchStatus = async (newStatus: WatchStatus) => {
-		setIsLoading(true);
-		setError(null);
+	// Check if user is authenticated on component mount
+	React.useEffect(() => {
+		async function checkAuth() {
+			const { data } = await supabase.auth.getUser();
+			setIsAuthenticated(!!data.user);
+		}
+		checkAuth();
+	}, [supabase]);
 
+	const handleStatusChange = async (newStatus: string) => {
+		// Check authentication first
+		if (isAuthenticated === false) {
+			// Redirect to login if not authenticated
+			router.push(`/login?redirectTo=/shows/${showId}`);
+			return;
+		}
+
+		setIsLoading(true);
 		try {
 			const {
 				data: { user },
 			} = await supabase.auth.getUser();
+
 			if (!user) {
-				throw new Error('Not authenticated');
+				router.push(`/login?redirectTo=/shows/${showId}`);
+				return;
 			}
 
-			// Check if a watch status already exists
-			const { data: existing } = await supabase
-				.from('watch_status')
-				.select()
-				.eq('user_id', user.id)
-				.eq('tmdb_id', showId)
-				.eq('content_type', 'show')
-				.single();
+			if (newStatus === status) {
+				// If clicking the active status again, remove it
+				await supabase.from('watch_status').delete().eq('user_id', user.id).eq('tmdb_id', showId).eq('content_type', 'show');
 
-			if (existing) {
-				// Update existing status
-				const { error } = await supabase
-					.from('watch_status')
-					.update({
-						status: newStatus,
-						updated_at: new Date().toISOString(),
-					})
-					.eq('id', existing.id);
-
-				if (error) throw error;
+				setStatus('');
+				if (onStatusChange) onStatusChange('');
 			} else {
-				// Create new status
-				const { error } = await supabase.from('watch_status').insert({
+				// Otherwise, update or insert new status
+				const { data, error } = await supabase.from('watch_status').upsert({
 					user_id: user.id,
 					tmdb_id: showId,
 					content_type: 'show',
 					status: newStatus,
+					updated_at: new Date().toISOString(),
 				});
 
 				if (error) throw error;
-			}
 
-			setStatus(newStatus);
-			onStatusChange?.(newStatus);
-		} catch (err) {
-			setError(err instanceof Error ? err.message : 'Failed to update status');
+				setStatus(newStatus);
+				if (onStatusChange) onStatusChange(newStatus);
+			}
+		} catch (error) {
+			console.error('Error updating watch status:', error);
 		} finally {
 			setIsLoading(false);
 		}
 	};
 
-	return (
-		<div className="flex flex-col gap-4">
-			<div className="grid grid-cols-2 gap-2">
-				{WATCH_STATUSES.map(({ value, label, icon: Icon }) => (
-					<button
-						key={value}
-						onClick={() => updateWatchStatus(value)}
-						disabled={isLoading}
-						className={`flex items-center justify-center gap-2 rounded-lg border-2 
-              ${
-					status === value
-						? 'border-purple-500 bg-purple-100 text-purple-700'
-						: 'border-purple-200 bg-white/50 text-gray-700 hover:bg-purple-50'
-				} p-3 font-bold transitionn cursor-pointer`}
-					>
-						<Icon className="h-5 w-5" />
-						{label}
-					</button>
-				))}
+	// While checking auth status
+	if (isAuthenticated === null) {
+		return (
+			<div className="flex items-center justify-center py-2">
+				<Loader2 className="h-5 w-5 animate-spin text-purple-500" />
 			</div>
-			{error && <div className="rounded-lg bg-red-100 p-3 text-sm text-red-600">{error}</div>}
+		);
+	}
+
+	// If not authenticated, show login prompt
+	if (isAuthenticated === false) {
+		return (
+			<div className="rounded-xl border-2 border-purple-300 bg-white/70 p-4">
+				<p className="text-center text-gray-700 mb-2">Login to track your watch status</p>
+				<button
+					onClick={() => router.push(`/login?redirectTo=/shows/${showId}`)}
+					className="w-full rounded-lg bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 px-4 py-2 font-bold text-white hover:opacity-90 transition cursor-pointer"
+				>
+					Sign in
+				</button>
+			</div>
+		);
+	}
+
+	// Authentication status buttons
+	return (
+		<div className="flex flex-wrap gap-2">
+			{isLoading ? (
+				<div className="flex w-full items-center justify-center py-2">
+					<Loader2 className="h-5 w-5 animate-spin text-purple-500" />
+					<span className="ml-2">Updating...</span>
+				</div>
+			) : (
+				<>
+					{['Watching', 'Completed', 'Plan to Watch', 'Dropped'].map((statusOption) => (
+						<button
+							key={statusOption}
+							onClick={() => handleStatusChange(statusOption)}
+							className={`rounded-lg px-4 py-2 font-bold transition ${
+								status === statusOption
+									? 'bg-purple-500 text-white'
+									: 'border-2 border-purple-300 bg-white/50 text-purple-600 hover:bg-purple-100'
+							}`}
+						>
+							{statusOption}
+						</button>
+					))}
+				</>
+			)}
 		</div>
 	);
 }

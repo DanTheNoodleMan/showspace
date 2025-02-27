@@ -13,14 +13,12 @@ export async function GET(request: Request, { params }: RouteParams) {
 		const supabase = await createClient();
 		const tmdbId = parseInt(resolvedParams.id);
 
-		// Get auth session using getUser
+		// Try to get auth session - but don't require it
 		const {
 			data: { user },
-			error: authError,
 		} = await supabase.auth.getUser();
-		if (authError) throw authError;
 
-		const userId = user?.id;
+		const userId = user?.id; // This will be undefined for non-authenticated users
 
 		// Get show details from TMDB
 		const tmdbShow = await tmdbService.getShowDetails(tmdbId);
