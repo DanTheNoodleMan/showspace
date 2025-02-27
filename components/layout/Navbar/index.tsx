@@ -12,7 +12,7 @@ import { NavLink as NavLinkType } from '@/types/navbar';
 const NAV_LINKS = {
 	public: [
 		{ href: '/', label: 'HOME' },
-		{ href: '/shows', label: 'SHOWS' },
+		{ href: '/daily-trailer', label: 'DAILY GAME' },
 	],
 	authenticated: [
 		{ href: '/', label: 'HOME' },

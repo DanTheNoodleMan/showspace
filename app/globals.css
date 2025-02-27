@@ -6,6 +6,10 @@
   --background-end-rgb: 240, 240, 255;
 }
 
+html{
+  scroll-behavior: smooth;
+}
+
 body {
   color: rgb(var(--foreground-rgb));
   background: linear-gradient(
