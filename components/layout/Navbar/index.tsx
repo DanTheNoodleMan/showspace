@@ -8,6 +8,7 @@ import { usePathname } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { NavLink as NavLinkType } from '@/types/navbar';
+import Link from 'next/link';
 
 const NAV_LINKS = {
 	public: [
@@ -52,9 +53,11 @@ export function Navbar() {
 			<nav className="relative mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
 				{/* Logo */}
 				<div className="flex items-center gap-2">
-					<span className="bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 bg-clip-text text-lg md:text-3xl font-black uppercase tracking-wider text-transparent">
-						SHOWSPACE
-					</span>
+					<Link href={'/'}>
+						<span className="bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 bg-clip-text text-lg md:text-3xl font-black uppercase tracking-wider text-transparent">
+							SHOWSPACE
+						</span>
+					</Link>
 				</div>
 
 				{/* Desktop Navigation */}

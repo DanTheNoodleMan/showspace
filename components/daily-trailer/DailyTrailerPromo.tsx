@@ -1,23 +1,71 @@
-// app/components/home/DailyTrailerPromo.tsx
 'use client';
-import React from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Star, Play, Trophy } from 'lucide-react';
-import Link from 'next/link';
+import { Star, Play, Trophy, Loader2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { LoadingOverlay } from '@/components/ui/loading-overlay';
 
 export function DailyTrailerPromo() {
+	const [isLoading, setIsLoading] = useState(false);
+	const [showOverlay, setShowOverlay] = useState(false);
+	const router = useRouter();
+
+	// Handle loading timeout to prevent UI getting stuck
+	useEffect(() => {
+		let timer: NodeJS.Timeout;
+		if (isLoading) {
+			// If loading takes more than 5 seconds, show the overlay
+			timer = setTimeout(() => {
+				setShowOverlay(true);
+			}, 300); // Show overlay after 300ms for a smoother experience
+		}
+
+		return () => {
+			clearTimeout(timer);
+		};
+	}, [isLoading]);
+
+	const handleClick = (e: React.MouseEvent) => {
+		if (isLoading) {
+			// Prevent navigation if already loading
+			e.preventDefault();
+			return;
+		}
+
+		setIsLoading(true);
+
+		// Prefetch and navigate
+		router.prefetch('/daily-trailer');
+
+		// Slight delay before navigation for animation
+		setTimeout(() => {
+			router.push('/daily-trailer');
+		}, 100);
+	};
+
 	return (
-		<Link href="/daily-trailer">
+		<>
+			{/* Full-screen loading overlay */}
+			<LoadingOverlay isVisible={showOverlay} />
+
 			<motion.div
-				className="group relative cursor-pointer overflow-hidden rounded-xl border-4 border-white/50 bg-gradient-to-r from-pink-200 via-purple-200 to-cyan-200 shadow-xl backdrop-blur-lg"
-				whileHover={{ scale: 1.02 }}
-				whileTap={{ scale: 0.98 }}
+				onClick={handleClick}
+				className={`group relative cursor-pointer overflow-hidden rounded-xl border-4 border-white/50 bg-gradient-to-r from-pink-200 via-purple-200 to-cyan-200 shadow-xl backdrop-blur-lg ${
+					isLoading ? 'pointer-events-none' : ''
+				}`}
+				whileHover={{ scale: isLoading ? 1.0 : 1.02 }}
+				whileTap={{ scale: isLoading ? 1.0 : 0.98 }}
 			>
 				<div className="absolute -inset-2 bg-gradient-to-r from-pink-400 via-purple-400 to-cyan-400 opacity-0 blur transition-opacity group-hover:opacity-75" />
-				<div className="relative flex flex-col md:flex-row items-center gap-6 p-6">
+				<div className="relative flex flex-col items-center gap-6 p-6 md:flex-row">
 					{/* Icon Container */}
 					<div className="flex h-20 w-20 items-center justify-center rounded-full bg-white/90 shadow-lg">
-						<Play className="h-8 w-8 text-purple-500" />
+						{isLoading ? (
+							<Loader2 className="h-8 w-8 animate-spin text-purple-500" />
+						) : (
+							<Play className="h-8 w-8 text-purple-500" />
+						)}
 					</div>
 
 					{/* Content */}
@@ -44,12 +92,19 @@ export function DailyTrailerPromo() {
 					<div className="mt-4 md:mt-0 group-hover:animate-pulse">
 						<div className="rounded-full bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 p-1">
 							<div className="rounded-full bg-white px-6 py-2 font-bold text-gray-800 transition group-hover:bg-transparent group-hover:text-white">
-								PLAY NOW
+								{isLoading ? (
+									<span className="flex items-center gap-2">
+										<Loader2 className="h-4 w-4 animate-spin" />
+										LOADING...
+									</span>
+								) : (
+									'PLAY NOW'
+								)}
 							</div>
 						</div>
 					</div>
 				</div>
 			</motion.div>
-		</Link>
+		</>
 	);
 }
