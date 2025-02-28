@@ -1,20 +1,14 @@
 import { createClient } from '@/lib/supabase/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { checkAuthenticatedApi } from '@/lib/auth/api-auth';
-
-interface RouteParams {
-	params: {
-		username: string;
-	};
-}
-
-export async function POST(request: NextRequest, context: RouteParams) {
+// params (context) params: a promise that resolves to an object containing the dynamic route parameters for the current route
+export async function POST(request: Request, { params }: { params: Promise<{ username: string }> }) {
 	try {
 		const { user, error: authError } = await checkAuthenticatedApi();
 		if (authError) return authError;
 
 		const supabase = await createClient();
-		const { username } = context.params;
+		const { username } = await params; // Await here is necessary because params is a promise
 
 		// Get the profile to follow
 		const { data: profileToFollow, error: profileError } = await supabase
@@ -54,13 +48,13 @@ export async function POST(request: NextRequest, context: RouteParams) {
 	}
 }
 
-export async function DELETE(request: NextRequest, context: RouteParams) {
+export async function DELETE(request: Request, { params }: { params: { username: string } }) {
 	try {
 		const { user, error: authError } = await checkAuthenticatedApi();
 		if (authError) return authError;
 
 		const supabase = await createClient();
-		const { username } = context.params;
+		const { username } = params;
 
 		// Get the profile to unfollow
 		const { data: profileToUnfollow, error: profileError } = await supabase
