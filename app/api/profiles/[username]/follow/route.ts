@@ -1,8 +1,12 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 import { checkAuthenticatedApi } from '@/lib/auth/api-auth';
+
+interface RouteParams {
+	params: Promise<{ username: string }>;
+}
 // params (context) params: a promise that resolves to an object containing the dynamic route parameters for the current route
-export async function POST(request: Request, { params }: { params: Promise<{ username: string }> }) {
+export async function POST(request: Request, { params }: RouteParams) {
 	try {
 		const { user, error: authError } = await checkAuthenticatedApi();
 		if (authError) return authError;
@@ -48,7 +52,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ use
 	}
 }
 
-export async function DELETE(request: Request, { params }: { params: Promise<{ username: string }> }) {
+export async function DELETE(request: Request, { params }: RouteParams) {
 	try {
 		const { user, error: authError } = await checkAuthenticatedApi();
 		if (authError) return authError;

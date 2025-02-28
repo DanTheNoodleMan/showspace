@@ -1,7 +1,11 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
-export async function GET(request: Request, { params }: { params: { username: string } }) {
+interface RouteParams {
+	params: Promise<{ username: string }>;
+}
+
+export async function GET(request: Request, { params }: RouteParams) {
 	try {
 		const supabase = await createClient();
 		const { username } = await params;
