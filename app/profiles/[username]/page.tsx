@@ -12,9 +12,7 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 interface ProfilePageProps {
-	params: {
-		username: string;
-	};
+	params: Promise<{ username: string }>;
 }
 
 async function getProfileData(username: string) {
@@ -22,11 +20,7 @@ async function getProfileData(username: string) {
 	const formattedUsername = username.toLowerCase();
 
 	// First get the profile by username
-	const { data: profile, error: profileError } = await supabase
-		.from('profiles')
-		.select('*')
-		.eq('username', formattedUsername)
-		.single();
+	const { data: profile, error: profileError } = await supabase.from('profiles').select('*').eq('username', formattedUsername).single();
 
 	if (profileError || !profile) {
 		redirect('/');
