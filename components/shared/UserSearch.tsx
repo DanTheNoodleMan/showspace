@@ -92,14 +92,14 @@ export function UserSearch() {
 	return (
 		<div ref={searchRef} className="relative max-w-2xl">
 			<div className="relative overflow-hidden rounded-full border-4 border-white/50 bg-white/90 shadow-xl backdrop-blur-lg">
-				<Search className="absolute left-4 top-3 h-6 w-6 text-purple-400" />
+				<Search className="absolute left-4 top-2 h-6 w-6 text-purple-400" />
 				<input
 					type="text"
 					value={query}
 					onChange={handleSearch}
 					onClick={() => setIsOpen(true)}
 					placeholder="SEARCH USERS..."
-					className="w-full bg-transparent px-6 py-3 pl-12 font-bold tracking-wide text-gray-700 placeholder-purple-300 focus:outline-none"
+					className="w-full bg-transparent px-6 py-2 pl-12 font-bold tracking-wide text-gray-700 placeholder-purple-300 focus:outline-none"
 				/>
 				{query && (
 					<button
@@ -108,7 +108,7 @@ export function UserSearch() {
 							setUsers([]);
 							setIsOpen(false);
 						}}
-						className="absolute right-4 top-3 rounded-full bg-gray-200 p-1 hover:bg-gray-300"
+						className="absolute right-4 top-2 rounded-full bg-gray-200 p-1 hover:bg-gray-300"
 					>
 						<X className="h-4 w-4 text-gray-600" />
 					</button>

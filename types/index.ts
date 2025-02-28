@@ -12,7 +12,6 @@ export interface User {
 	updatedAt: Date;
 }
 
-
 // Review model
 export interface Review {
 	id: string;
@@ -65,6 +64,7 @@ export interface Show {
 	id: string;
 	tmdbId: number;
 	title: string;
+	originalName: string;
 	overview: string;
 	posterPath: string;
 	firstAirDate: Date;
@@ -72,6 +72,7 @@ export interface Show {
 	genres: Genre[];
 	rating: number;
 	originCountry: string[];
+	popularity: number;
 }
 
 export interface Review {

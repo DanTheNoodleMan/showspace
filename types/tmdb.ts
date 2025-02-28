@@ -39,6 +39,7 @@ export const mapTMDBShowToShow = (tmdbShow: TMDBShow): Show => ({
 	id: tmdbShow.id.toString(),
 	tmdbId: tmdbShow.id,
 	title: tmdbShow.name,
+	originalName: tmdbShow.original_name,
 	overview: tmdbShow.overview,
 	posterPath: tmdbShow.poster_path,
 	firstAirDate: new Date(tmdbShow.first_air_date),
@@ -46,6 +47,7 @@ export const mapTMDBShowToShow = (tmdbShow: TMDBShow): Show => ({
 	status: tmdbShow.status,
 	genres: [],
 	originCountry: tmdbShow.origin_country,
+	popularity: tmdbShow.popularity,
 });
 
 export interface TMDBSeason {

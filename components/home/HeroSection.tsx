@@ -3,6 +3,7 @@ import React from 'react';
 import { Search } from 'lucide-react';
 import { StarBurst } from '@/components/layout/Navbar/StarBurst';
 import { SearchBar } from '@/components/shared/SearchBar';
+import { ShowSearch } from '@/components/shared/ShowSearch';
 
 export const HeroSection = () => (
 	<section className="mx-auto max-w-4xl text-center">
@@ -17,6 +18,6 @@ export const HeroSection = () => (
 			Your Digital TV Diary
 		</h1>
 
-		<SearchBar />
+		<ShowSearch />
 	</section>
 );
