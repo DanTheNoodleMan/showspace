@@ -48,13 +48,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ use
 	}
 }
 
-export async function DELETE(request: Request, { params }: { params: { username: string } }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ username: string }> }) {
 	try {
 		const { user, error: authError } = await checkAuthenticatedApi();
 		if (authError) return authError;
 
 		const supabase = await createClient();
-		const { username } = params;
+		const { username } = await params;
 
 		// Get the profile to unfollow
 		const { data: profileToUnfollow, error: profileError } = await supabase
