@@ -4,9 +4,7 @@ import { notFound } from 'next/navigation';
 import { Connections } from './Connections';
 
 interface ConnectionsPageProps {
-	params: {
-		username: string;
-	};
+	params: Promise<{ username: string }>;
 	searchParams: {
 		tab?: 'following' | 'followers';
 	};
