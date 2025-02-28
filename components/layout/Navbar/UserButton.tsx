@@ -44,7 +44,7 @@ export function UserButton({ user }: UserButtonProps) {
 			<div className="absolute right-0 mt-2 w-48 scale-0 rounded-xl border-4 border-white/50 bg-white/90 p-2 shadow-lg backdrop-blur-lg transition-all group-hover:scale-100">
 				<div className="space-y-1">
 					<Link
-						href="/profile"
+						href={`/profiles/${user.user_metadata.username}`}
 						className="flex w-full items-center gap-2 rounded-lg px-4 py-2 text-left font-bold tracking-wide text-gray-700 transition hover:bg-purple-100"
 						onClick={() => console.log('Profile')}
 					>

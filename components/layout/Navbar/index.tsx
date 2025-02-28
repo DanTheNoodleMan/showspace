@@ -5,11 +5,10 @@ import { NavLink } from './NavLink';
 import { MobileMenu } from './MobileMenu';
 import { UserButton } from './UserButton';
 import { usePathname } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
-import { User } from '@supabase/supabase-js';
 import { NavLink as NavLinkType } from '@/types/navbar';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
+import { UserSearch } from '@/components/shared/UserSearch';
 
 const NAV_LINKS = {
 	public: [
@@ -46,6 +45,11 @@ export function Navbar() {
 							SHOWSPACE
 						</span>
 					</Link>
+				</div>
+
+				{/* User Search Bar */}
+				<div className="hidden flex-1 px-8 md:block">
+					<UserSearch />
 				</div>
 
 				{/* Desktop Navigation */}

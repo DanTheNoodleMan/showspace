@@ -6,6 +6,7 @@ import { NavLink } from './NavLink';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter, usePathname } from 'next/navigation';
 import { MobileMenuProps } from '@/types/navbar';
+import { UserSearch } from '@/components/shared/UserSearch';
 
 const PATHS_WITH_LOADING_OVERLAY = ['/profile', '/lists', '/settings', '/login', '/signup', '/daily-trailer,', '/'];
 
@@ -161,72 +162,79 @@ export function MobileMenu({ isOpen, onToggle, links, user }: MobileMenuProps) {
 							</div>
 						))}
 
-						{/* User Section */}
-						{user ? (
-							<div className="mt-6 pt-6 border-t border-white/50">
-								<button
-									onClick={toggleUserMenu}
-									className="flex w-full items-center justify-between rounded-lg border border-white/50 bg-white/90 px-4 py-3 font-bold tracking-wide"
-								>
-									<div className="flex items-center gap-2">
-										<UserIcon className="h-5 w-5" />
-										<span>{user.user_metadata.username?.toUpperCase() || 'ACCOUNT'}</span>
-									</div>
-									{userMenuOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
-								</button>
+						{/* Wrapper for user section and search */}
+						<div className="relative mt-6 flex flex-col gap-6">
+							{/* User Section */}
+							{user ? (
+								<div className="border-t border-white/50 pt-6">
+									<button
+										onClick={toggleUserMenu}
+										className="flex w-full items-center justify-between rounded-lg border border-white/50 bg-white/90 px-4 py-3 font-bold tracking-wide"
+									>
+										<div className="flex items-center gap-2">
+											<UserIcon className="h-5 w-5" />
+											<span>{user.user_metadata.username?.toUpperCase() || 'ACCOUNT'}</span>
+										</div>
+										{userMenuOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+									</button>
 
-								{/* User Menu Items */}
-								<div
-									className={`mt-2 space-y-2 pl-4 transition-all duration-200 ${
-										userMenuOpen ? 'max-h-60 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
-									}`}
-								>
-									<button
-										onClick={() => handleNavigation('/profile')}
-										className="flex w-full items-center gap-2 rounded-lg bg-white/50 px-4 py-3 font-bold tracking-wide text-gray-700 hover:bg-white/80 transition text-left"
+									{/* User Menu Items */}
+									<div
+										className={`mt-2 space-y-2 pl-4 transition-all duration-200 ${
+											userMenuOpen ? 'max-h-60 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
+										}`}
 									>
-										<UserIcon className="h-5 w-5" />
-										Profile
+										<button
+											onClick={() => handleNavigation('/profile')}
+											className="flex w-full items-center gap-2 rounded-lg bg-white/50 px-4 py-3 font-bold tracking-wide text-gray-700 hover:bg-white/80 transition text-left"
+										>
+											<UserIcon className="h-5 w-5" />
+											Profile
+										</button>
+										<button
+											onClick={() => handleNavigation('/lists')}
+											className="flex w-full items-center gap-2 rounded-lg bg-white/50 px-4 py-3 font-bold tracking-wide text-gray-700 hover:bg-white/80 transition text-left"
+										>
+											<List className="h-5 w-5" />
+											My Lists
+										</button>
+										<button
+											onClick={() => handleNavigation('/settings')}
+											className="flex w-full items-center gap-2 rounded-lg bg-white/50 px-4 py-3 font-bold tracking-wide text-gray-700 hover:bg-white/80 transition text-left"
+										>
+											<Settings className="h-5 w-5" />
+											Settings
+										</button>
+										<button
+											onClick={handleSignOut}
+											className="flex w-full items-center gap-2 rounded-lg bg-red-100 px-4 py-3 font-bold tracking-wide text-red-600 hover:bg-red-200 transition text-left"
+										>
+											<LogOut className="h-5 w-5" />
+											Sign Out
+										</button>
+									</div>
+								</div>
+							) : (
+								<div className="border-t border-white/50 pt-6 space-y-4">
+									<button
+										onClick={() => handleNavigation('/login')}
+										className="flex items-center justify-center w-full rounded-lg bg-white/90 px-4 py-3 font-bold tracking-wide hover:bg-white/80 transition"
+									>
+										LOG IN
 									</button>
 									<button
-										onClick={() => handleNavigation('/lists')}
-										className="flex w-full items-center gap-2 rounded-lg bg-white/50 px-4 py-3 font-bold tracking-wide text-gray-700 hover:bg-white/80 transition text-left"
+										onClick={() => handleNavigation('/signup')}
+										className="flex items-center justify-center w-full rounded-lg bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 px-4 py-3 font-bold tracking-wide text-white hover:opacity-90 transition"
 									>
-										<List className="h-5 w-5" />
-										My Lists
-									</button>
-									<button
-										onClick={() => handleNavigation('/settings')}
-										className="flex w-full items-center gap-2 rounded-lg bg-white/50 px-4 py-3 font-bold tracking-wide text-gray-700 hover:bg-white/80 transition text-left"
-									>
-										<Settings className="h-5 w-5" />
-										Settings
-									</button>
-									<button
-										onClick={handleSignOut}
-										className="flex w-full items-center gap-2 rounded-lg bg-red-100 px-4 py-3 font-bold tracking-wide text-red-600 hover:bg-red-200 transition text-left"
-									>
-										<LogOut className="h-5 w-5" />
-										Sign Out
+										SIGN UP
 									</button>
 								</div>
-							</div>
-						) : (
-							<div className="mt-6 pt-6 border-t border-white/50 space-y-4">
-								<button
-									onClick={() => handleNavigation('/login')}
-									className="flex items-center justify-center w-full rounded-lg bg-white/90 px-4 py-3 font-bold tracking-wide hover:bg-white/80 transition"
-								>
-									LOG IN
-								</button>
-								<button
-									onClick={() => handleNavigation('/signup')}
-									className="flex items-center justify-center w-full rounded-lg bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 px-4 py-3 font-bold tracking-wide text-white hover:opacity-90 transition"
-								>
-									SIGN UP
-								</button>
-							</div>
-						)}
+							)}
+						</div>
+						{/* User Search Bar */}
+						<div className="w-full">
+							<UserSearch />
+						</div>
 					</div>
 
 					{/* Footer */}
