@@ -1,47 +1,20 @@
-// /app/profile/page.tsx
+// app/profile/page.tsx
 import { createClient } from '@/lib/supabase/server';
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
 import { StatsGrid } from '@/components/profile/StatsGrid';
 import { ActivityFeed } from '@/components/profile/ActivityFeed';
-import { redirect } from 'next/navigation';
 import { GridBackground } from '@/components/shared/GridBackground';
 import { headers } from 'next/headers';
 import { Suspense } from 'react';
 import { ProfileSkeleton } from '@/components/profile/ProfileSkeleton';
 
-// This helps Next.js optimize and not show stale data
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export default async function ProfilePage() {
+async function getProfileData() {
 	const supabase = await createClient();
-	// Use getUser for secure authentication check
-	const {
-		data: { user },
-		error: authError,
-	} = await supabase.auth.getUser();
 
-	if (!user || authError) {
-		redirect('/login');
-	}
-
-	// Wrap data fetching in Suspense boundaries for more granular loading states
-	return (
-		<div className="min-h-screen bg-gradient-to-b from-pink-100 via-purple-100 to-cyan-100 pt-8">
-			<div className="absolute inset-0">
-				<GridBackground />
-			</div>
-			<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-				<Suspense fallback={<ProfileSkeleton />}>
-					<ProfileContent userId={user.id} user={user} />
-				</Suspense>
-			</div>
-		</div>
-	);
-}
-
-async function ProfileContent({ userId, user }: { userId: string; user: any }) {
-	// Fetch profile data from our new API endpoint
+	// Fetch profile data
 	const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/profile`, {
 		headers: {
 			Cookie: (await headers()).get('cookie') || '',
@@ -54,25 +27,13 @@ async function ProfileContent({ userId, user }: { userId: string; user: any }) {
 
 	const { profile, stats } = await response.json();
 
-	// First fetch watch history
-	const supabase = await createClient();
-	const { data: watchHistory } = await supabase
-		.from('watch_history')
-		.select('*')
-		.eq('user_id', userId)
-		.order('watched_at', { ascending: false })
-		.limit(10);
+	// Fetch watch history and reviews
+	const [{ data: watchHistory }, { data: reviews }] = await Promise.all([
+		supabase.from('watch_history').select('*').order('watched_at', { ascending: false }).limit(10),
+		supabase.from('reviews').select('*').eq('content_type', 'show').order('created_at', { ascending: false }).limit(10),
+	]);
 
-	// Then fetch recent reviews
-	const { data: reviews } = await supabase
-		.from('reviews')
-		.select('*')
-		.eq('user_id', userId)
-		.eq('content_type', 'show')
-		.order('created_at', { ascending: false })
-		.limit(10);
-
-	// Combine and sort both types of activities
+	// Combine and sort activities
 	const activities = [
 		...(watchHistory?.map((activity) => ({
 			id: activity.id,
@@ -89,14 +50,34 @@ async function ProfileContent({ userId, user }: { userId: string; user: any }) {
 			content: review.content,
 		})) ?? []),
 	]
-		// Sort combined activities by timestamp, most recent first
 		.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
-		// Take only the 10 most recent activities
 		.slice(0, 10);
+
+	return { profile, stats, activities };
+}
+
+export default async function ProfilePage() {
+	// No need for auth check here - middleware handles it
+	return (
+		<div className="min-h-screen bg-gradient-to-b from-pink-100 via-purple-100 to-cyan-100 pt-8">
+			<div className="absolute inset-0">
+				<GridBackground />
+			</div>
+			<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+				<Suspense fallback={<ProfileSkeleton />}>
+					<ProfileContent />
+				</Suspense>
+			</div>
+		</div>
+	);
+}
+
+async function ProfileContent() {
+	const { profile, stats, activities } = await getProfileData();
 
 	return (
 		<>
-			<ProfileHeader user={user} stats={stats} />
+			<ProfileHeader profile={profile} stats={stats} />
 			<div className="mt-8 grid gap-8 lg:grid-cols-3">
 				<StatsGrid stats={stats} className="lg:col-span-1" />
 				<ActivityFeed activities={activities} className="lg:col-span-2" />

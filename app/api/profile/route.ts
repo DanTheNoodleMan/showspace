@@ -1,19 +1,14 @@
 // app/api/profile/route.ts
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
+import { checkAuthenticatedApi } from '@/lib/auth/api-auth';
 
 export async function GET() {
 	try {
 		const supabase = await createClient();
 
-		// First verify the user is authenticated
-		const {
-			data: { user },
-			error: authError,
-		} = await supabase.auth.getUser();
-		if (authError || !user) {
-			return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-		}
+		const { user, error } = await checkAuthenticatedApi();
+		if (error) return error;
 
 		// Get user profile data
 		const [

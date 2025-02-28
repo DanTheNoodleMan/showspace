@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useRouter, usePathname } from 'next/navigation';
 import { MobileMenuProps } from '@/types/navbar';
 
-const PATHS_WITH_LOADING_OVERLAY = ['/profile', '/lists', '/settings', '/login', '/signup'];
+const PATHS_WITH_LOADING_OVERLAY = ['/profile', '/lists', '/settings', '/login', '/signup', '/daily-trailer,', '/'];
 
 // Safety timeout to prevent infinite loading state (in milliseconds)
 const LOADING_TIMEOUT = 3000;

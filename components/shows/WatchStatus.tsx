@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 
 interface WatchStatusProps {
 	showId: number;
@@ -14,22 +15,13 @@ interface WatchStatusProps {
 export function WatchStatus({ showId, initialStatus, onStatusChange }: WatchStatusProps) {
 	const [status, setStatus] = useState(initialStatus || '');
 	const [isLoading, setIsLoading] = useState(false);
-	const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+	const { user, isLoading: authLoading } = useAuth();
 	const router = useRouter();
 	const supabase = createClient();
 
-	// Check if user is authenticated on component mount
-	React.useEffect(() => {
-		async function checkAuth() {
-			const { data } = await supabase.auth.getUser();
-			setIsAuthenticated(!!data.user);
-		}
-		checkAuth();
-	}, [supabase]);
-
 	const handleStatusChange = async (newStatus: string) => {
 		// Check authentication first
-		if (isAuthenticated === false) {
+		if (!user) {
 			// Redirect to login if not authenticated
 			router.push(`/login?redirectTo=/shows/${showId}`);
 			return;
@@ -37,24 +29,14 @@ export function WatchStatus({ showId, initialStatus, onStatusChange }: WatchStat
 
 		setIsLoading(true);
 		try {
-			const {
-				data: { user },
-			} = await supabase.auth.getUser();
-
-			if (!user) {
-				router.push(`/login?redirectTo=/shows/${showId}`);
-				return;
-			}
-
 			if (newStatus === status) {
 				// If clicking the active status again, remove it
 				await supabase.from('watch_status').delete().eq('user_id', user.id).eq('tmdb_id', showId).eq('content_type', 'show');
-
 				setStatus('');
 				if (onStatusChange) onStatusChange('');
 			} else {
 				// Otherwise, update or insert new status
-				const { data, error } = await supabase.from('watch_status').upsert({
+				const { error } = await supabase.from('watch_status').upsert({
 					user_id: user.id,
 					tmdb_id: showId,
 					content_type: 'show',
@@ -75,16 +57,15 @@ export function WatchStatus({ showId, initialStatus, onStatusChange }: WatchStat
 	};
 
 	// While checking auth status
-	if (isAuthenticated === null) {
+	if (authLoading) {
 		return (
 			<div className="flex items-center justify-center py-2">
 				<Loader2 className="h-5 w-5 animate-spin text-purple-500" />
 			</div>
 		);
 	}
-
 	// If not authenticated, show login prompt
-	if (isAuthenticated === false) {
+	if (!user) {
 		return (
 			<div className="rounded-xl border-2 border-purple-300 bg-white/70 p-4">
 				<p className="text-center text-gray-700 mb-2">Login to track your watch status</p>

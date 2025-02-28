@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { Navbar } from '@/components/layout/Navbar';
+import { AuthProvider } from '@/context/AuthContext';
 
 const geistSans = Geist({
 	variable: '--font-geist-sans',
@@ -27,10 +28,12 @@ export default function RootLayout({
 	return (
 		<html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
 			<body className="min-h-screen bg-gradient-to-b from-pink-100 via-purple-100 to-cyan-100">
-				<div className="flex min-h-screen flex-col">
-					<Navbar />
-					<main className="flex-1">{children}</main>
-				</div>
+				<AuthProvider>
+					<div className="flex min-h-screen flex-col">
+						<Navbar />
+						<main className="flex-1">{children}</main>
+					</div>
+				</AuthProvider>
 			</body>
 		</html>
 	);

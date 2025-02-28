@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { NavLink as NavLinkType } from '@/types/navbar';
 import Link from 'next/link';
+import { useAuth } from '@/context/AuthContext';
 
 const NAV_LINKS = {
 	public: [
@@ -24,28 +25,15 @@ const NAV_LINKS = {
 
 export function Navbar() {
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-	const [user, setUser] = useState<User | null>(null);
 	const pathname = usePathname();
-	const supabase = createClient();
-
-	useEffect(() => {
-		// Get and validate user
-		supabase.auth.getUser().then(({ data }) => {
-			setUser(data?.user ?? null);
-		});
-
-		// Listen for auth changes
-		const {
-			data: { subscription },
-		} = supabase.auth.onAuthStateChange((_event, session) => {
-			setUser(session?.user ?? null);
-		});
-
-		return () => subscription.unsubscribe();
-	}, [supabase.auth]);
+	const { user, isLoading } = useAuth();
 
 	// Create a mutable copy of the links array based on auth state
 	const links: NavLinkType[] = [...(user ? NAV_LINKS.authenticated : NAV_LINKS.public)];
+
+	if (isLoading) {
+		return <NavbarSkeleton />;
+	}
 
 	return (
 		<header className="sticky top-0 z-50">
@@ -70,6 +58,24 @@ export function Navbar() {
 
 				{/* Mobile Navigation */}
 				<MobileMenu isOpen={isMobileMenuOpen} onToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)} links={links} user={user} />
+			</nav>
+		</header>
+	);
+}
+
+// Add a simple loading skeleton
+function NavbarSkeleton() {
+	return (
+		<header className="sticky top-0 z-50">
+			<div className="absolute inset-0 bg-gradient-to-r from-pink-300 via-purple-300 to-cyan-300 opacity-80" />
+			<nav className="relative mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+				<div className="h-8 w-32 animate-pulse rounded-lg bg-white/50" />
+				<div className="hidden md:flex items-center gap-4">
+					{[1, 2, 3].map((i) => (
+						<div key={i} className="h-10 w-24 animate-pulse rounded-lg bg-white/50" />
+					))}
+				</div>
+				<div className="md:hidden h-10 w-10 animate-pulse rounded-lg bg-white/50" />
 			</nav>
 		</header>
 	);

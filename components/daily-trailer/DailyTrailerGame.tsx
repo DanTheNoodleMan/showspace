@@ -2,6 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
 	Star,
 	Trophy,
@@ -19,9 +22,7 @@ import {
 } from 'lucide-react';
 import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
-import { useRouter } from 'next/navigation';
 import { formatDistanceToNow } from 'date-fns';
-import { motion, AnimatePresence } from 'framer-motion';
 
 interface DailyTrailerGameProps {
 	movie: {
@@ -34,159 +35,166 @@ interface DailyTrailerGameProps {
 	};
 }
 
-export function DailyTrailerGame({ movie }: DailyTrailerGameProps) {
-	const [guess, setGuess] = useState<number>(50);
-	const [hasGuessed, setHasGuessed] = useState(false);
-	const [result, setResult] = useState<'correct' | 'close' | 'incorrect' | null>(null);
-	const [streak, setStreak] = useState(0);
-	const [activeTab, setActiveTab] = useState<'info' | 'leaderboard'>('info');
-	const [remainingTime, setRemainingTime] = useState<string>('');
-	const [leaderboard, setLeaderboard] = useState<Array<{ username: string; current_streak: number }>>([]);
-	const [isSubmitting, setIsSubmitting] = useState(false);
-	const [rulesExpanded, setRulesExpanded] = useState(false);
-	const router = useRouter();
+interface GameState {
+	hasGuessed: boolean;
+	guess: number;
+	result: 'correct' | 'close' | 'incorrect' | null;
+	streak: number;
+}
+
+// Separate game state management
+function useGameState(movieId: number) {
+	const [gameState, setGameState] = useState<GameState>({
+		hasGuessed: false,
+		guess: 50,
+		result: null,
+		streak: 0,
+	});
+	const { user } = useAuth();
 	const supabase = createClient();
 
-	// Determine if the user has already played today
 	useEffect(() => {
-		const checkUserPlayed = async () => {
-			const {
-				data: { user },
-			} = await supabase.auth.getUser();
+		async function loadGameState() {
+			if (!user) return;
 
-			if (user) {
+			try {
 				const { data } = await supabase
 					.from('daily_game_guesses')
 					.select('*')
 					.eq('user_id', user.id)
-					.eq('movie_id', movie.id)
+					.eq('movie_id', movieId)
 					.single();
 
 				if (data) {
-					setHasGuessed(true);
-					setGuess(data.guess);
+					const difference = Math.abs(data.guess - data.actual_rating);
+					let result: 'correct' | 'close' | 'incorrect';
 
-					// Calculate result
-					const difference = Math.abs(data.guess - movie.rating);
-					if (difference <= 5) {
-						setResult('correct');
-					} else if (difference <= 15) {
-						setResult('close');
-					} else {
-						setResult('incorrect');
-					}
+					if (difference <= 5) result = 'correct';
+					else if (difference <= 15) result = 'close';
+					else result = 'incorrect';
+
+					const { data: userData } = await supabase.from('profiles').select('current_streak').eq('id', user.id).single();
+
+					setGameState({
+						hasGuessed: true,
+						guess: data.guess,
+						result,
+						streak: userData?.current_streak || 0,
+					});
 				}
-
-				// Get user streak
-				const { data: userData } = await supabase.from('profiles').select('current_streak').eq('id', user.id).single();
-
-				if (userData) {
-					setStreak(userData.current_streak || 0);
-				}
+			} catch (error) {
+				console.error('Error loading game state:', error);
 			}
-		};
+		}
 
-		const fetchLeaderboard = async () => {
-			const { data } = await supabase
-				.from('profiles')
-				.select('username, current_streak')
-				.order('current_streak', { ascending: false })
-				.limit(10);
+		loadGameState();
+	}, [user, movieId, supabase]);
 
-			if (data) {
-				setLeaderboard(data);
-			}
-		};
+	return [gameState, setGameState] as const;
+}
 
-		checkUserPlayed();
-		fetchLeaderboard();
-	}, [movie.id, supabase]);
+// Separate leaderboard management
+function useLeaderboard() {
+	const [leaderboard, setLeaderboard] = useState<Array<{ username: string; current_streak: number }>>([]);
+	const supabase = createClient();
 
-	// Calculate time until next trailer
+	const refreshLeaderboard = async () => {
+		const { data } = await supabase
+			.from('profiles')
+			.select('username, current_streak')
+			.order('current_streak', { ascending: false })
+			.limit(10);
+
+		if (data) setLeaderboard(data);
+	};
+
+	useEffect(() => {
+		refreshLeaderboard();
+	}, []);
+
+	return [leaderboard, refreshLeaderboard] as const;
+}
+
+export function DailyTrailerGame({ movie }: DailyTrailerGameProps) {
+	const { user } = useAuth();
+	const router = useRouter();
+	const supabase = createClient();
+	const [gameState, setGameState] = useGameState(movie.id);
+	const [leaderboard, refreshLeaderboard] = useLeaderboard();
+
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [activeTab, setActiveTab] = useState<'info' | 'leaderboard'>('info');
+	const [rulesExpanded, setRulesExpanded] = useState(false);
+	const [remainingTime, setRemainingTime] = useState<string>('');
+	const [showSpoilers, setShowSpoilers] = useState(false);
+
+	// Calculate remaining time
 	useEffect(() => {
 		const calculateRemainingTime = () => {
 			const now = new Date();
-
-			// Create tomorrow's date at midnight
 			const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
-
-			// Calculate time difference in milliseconds
 			const diffMs = tomorrow.getTime() - now.getTime();
-
-			// Convert to hours and minutes
-			// Use Math.max to ensure we never show negative values
 			const diffHrs = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60)));
 			const diffMins = Math.max(0, Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60)));
-
-			// Format the remaining time string
 			setRemainingTime(`${diffHrs}h ${diffMins}m`);
 		};
 
 		calculateRemainingTime();
-		const timer = setInterval(calculateRemainingTime, 60000); // Update every minute
+		const timer = setInterval(calculateRemainingTime, 60000);
 		return () => clearInterval(timer);
 	}, []);
 
+	const handleGuessChange = (value: number | number[]) => {
+		if (!gameState.hasGuessed && typeof value === 'number') {
+			setGameState((prev) => ({ ...prev, guess: value }));
+		}
+	};
+
 	const handleSubmitGuess = async () => {
-		// Don't allow multiple submissions
-		if (isSubmitting) return;
+		if (isSubmitting || !user) {
+			if (!user) router.push('/login?redirectTo=/daily-trailer');
+			return;
+		}
+
 		setIsSubmitting(true);
 
 		try {
-			const {
-				data: { user },
-			} = await supabase.auth.getUser();
-
-			if (!user) {
-				router.push('/login?redirectTo=/daily-trailer');
-				return;
-			}
-
-			// Calculate result
-			const difference = Math.abs(guess - movie.rating);
-			let newResult: 'correct' | 'close' | 'incorrect';
+			const difference = Math.abs(gameState.guess - movie.rating);
+			let result: 'correct' | 'close' | 'incorrect';
 			let streakChange = 0;
 
 			if (difference <= 5) {
-				newResult = 'correct';
+				result = 'correct';
 				streakChange = 1;
 			} else if (difference <= 15) {
-				newResult = 'close';
+				result = 'close';
 				streakChange = 0;
 			} else {
-				newResult = 'incorrect';
-				streakChange = -streak; // Reset streak to 0
+				result = 'incorrect';
+				streakChange = -gameState.streak;
 			}
 
-			// Save guess to database
 			await supabase.from('daily_game_guesses').insert({
 				user_id: user.id,
 				movie_id: movie.id,
-				guess,
+				guess: gameState.guess,
 				actual_rating: movie.rating,
 				difference,
-				result: newResult,
+				result,
 			});
 
-			// Update user streak
-			const newStreak = Math.max(0, streak + streakChange);
+			const newStreak = Math.max(0, gameState.streak + streakChange);
 			await supabase.from('profiles').update({ current_streak: newStreak }).eq('id', user.id);
 
-			setResult(newResult);
-			setHasGuessed(true);
-			setStreak(newStreak);
+			setGameState((prev) => ({
+				...prev,
+				hasGuessed: true,
+				result,
+				streak: newStreak,
+			}));
+
 			setActiveTab('info');
-
-			// Refresh leaderboard
-			const { data: leaderboardData } = await supabase
-				.from('profiles')
-				.select('username, current_streak')
-				.order('current_streak', { ascending: false })
-				.limit(10);
-
-			if (leaderboardData) {
-				setLeaderboard(leaderboardData);
-			}
+			await refreshLeaderboard();
 		} catch (error) {
 			console.error('Error submitting guess:', error);
 		} finally {
@@ -196,7 +204,7 @@ export function DailyTrailerGame({ movie }: DailyTrailerGameProps) {
 
 	return (
 		<div className="flex flex-col gap-8">
-			{/* Collapsible Rules Section */}
+			{/* Rules Section */}
 			<motion.div
 				initial={{ opacity: 0, y: -20 }}
 				animate={{ opacity: 1, y: 0 }}
@@ -235,112 +243,120 @@ export function DailyTrailerGame({ movie }: DailyTrailerGameProps) {
 							initial={{ height: 0, opacity: 0 }}
 							animate={{ height: 'auto', opacity: 1 }}
 							exit={{ height: 0, opacity: 0 }}
-							transition={{ duration: 0.3, ease: 'easeInOut' }}
+							transition={{ duration: 0.3 }}
 							className="overflow-hidden"
 						>
 							<motion.div
-								initial={{ y: -20 }}
-								animate={{ y: 0 }}
-								transition={{ duration: 0.3, delay: 0.1 }}
-								className="mt-4 space-y-3"
+								initial={{ height: 0, opacity: 0 }}
+								animate={{ height: 'auto', opacity: 1 }}
+								exit={{ height: 0, opacity: 0 }}
+								transition={{ duration: 0.3, ease: 'easeInOut' }}
+								className="overflow-hidden"
 							>
-								{/* Rule 1 */}
 								<motion.div
-									className="rounded-lg border-2 border-pink-300 bg-gradient-to-r from-pink-50 to-purple-50 p-3 m-4 shadow-sm"
-									whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+									initial={{ y: -20 }}
+									animate={{ y: 0 }}
+									transition={{ duration: 0.3, delay: 0.1 }}
+									className="mt-4 space-y-3"
 								>
-									<div className="flex items-center gap-3">
-										<div className="flex h-8 w-8 items-center justify-center rounded-full bg-pink-400 text-white font-bold shadow-sm">
-											1
+									{/* Rule 1 */}
+									<motion.div
+										className="rounded-lg border-2 border-pink-300 bg-gradient-to-r from-pink-50 to-purple-50 p-3 m-4 shadow-sm"
+										whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+									>
+										<div className="flex items-center gap-3">
+											<div className="flex h-8 w-8 items-center justify-center rounded-full bg-pink-400 text-white font-bold shadow-sm">
+												1
+											</div>
+											<p className="font-medium text-gray-800 flex-1">Watch the movie trailer below</p>
+											<PlayCircle className="h-6 w-6 text-pink-500 hidden md:block" />
 										</div>
-										<p className="font-medium text-gray-800 flex-1">Watch the movie trailer below</p>
-										<PlayCircle className="h-6 w-6 text-pink-500 hidden md:block" />
-									</div>
-								</motion.div>
+									</motion.div>
 
-								{/* Rule 2 */}
-								<motion.div
-									className="rounded-lg border-2 border-purple-300 bg-gradient-to-r from-purple-50 to-indigo-50 m-4 p-3 shadow-sm"
-									whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
-								>
-									<div className="flex items-center gap-3">
-										<div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-400 text-white font-bold shadow-sm">
-											2
+									{/* Rule 2 */}
+									<motion.div
+										className="rounded-lg border-2 border-purple-300 bg-gradient-to-r from-purple-50 to-indigo-50 m-4 p-3 shadow-sm"
+										whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+									>
+										<div className="flex items-center gap-3">
+											<div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-400 text-white font-bold shadow-sm">
+												2
+											</div>
+											<p className="font-medium text-gray-800 flex-1">Guess the movie's rating out of 100</p>
+											<Star className="h-6 w-6 text-purple-500 hidden md:block" />
 										</div>
-										<p className="font-medium text-gray-800 flex-1">Guess the movie's rating out of 100</p>
-										<Star className="h-6 w-6 text-purple-500 hidden md:block" />
-									</div>
-								</motion.div>
+									</motion.div>
 
-								{/* Rule 3 */}
-								<motion.div
-									className="rounded-lg border-2 border-green-300 bg-gradient-to-r from-green-50 to-teal-50 m-4 p-3 shadow-sm"
-									whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
-								>
-									<div className="flex items-center gap-3">
-										<div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-400 text-white font-bold shadow-sm">
-											3
+									{/* Rule 3 */}
+									<motion.div
+										className="rounded-lg border-2 border-green-300 bg-gradient-to-r from-green-50 to-teal-50 m-4 p-3 shadow-sm"
+										whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+									>
+										<div className="flex items-center gap-3">
+											<div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-400 text-white font-bold shadow-sm">
+												3
+											</div>
+											<div className="flex-1">
+												<p className="font-medium text-gray-800">
+													Within 5 points: <span className="font-black text-green-600">CORRECT!</span>
+												</p>
+												<p className="text-sm text-green-600 mt-1">+1 to your streak</p>
+											</div>
+											<ThumbsUp className="h-6 w-6 text-green-500 hidden md:block" />
 										</div>
-										<div className="flex-1">
-											<p className="font-medium text-gray-800">
-												Within 5 points: <span className="font-black text-green-600">CORRECT!</span>
-											</p>
-											<p className="text-sm text-green-600 mt-1">+1 to your streak</p>
-										</div>
-										<ThumbsUp className="h-6 w-6 text-green-500 hidden md:block" />
-									</div>
-								</motion.div>
+									</motion.div>
 
-								{/* Rule 4 */}
-								<motion.div
-									className="rounded-lg border-2 border-yellow-300 bg-gradient-to-r from-yellow-50 to-amber-50 m-4 p-3 shadow-sm"
-									whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
-								>
-									<div className="flex items-center gap-3">
-										<div className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-400 text-white font-bold shadow-sm">
-											4
+									{/* Rule 4 */}
+									<motion.div
+										className="rounded-lg border-2 border-yellow-300 bg-gradient-to-r from-yellow-50 to-amber-50 m-4 p-3 shadow-sm"
+										whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+									>
+										<div className="flex items-center gap-3">
+											<div className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-400 text-white font-bold shadow-sm">
+												4
+											</div>
+											<div className="flex-1">
+												<p className="font-medium text-gray-800">
+													Within 15 points: <span className="font-black text-yellow-600">CLOSE!</span>
+												</p>
+												<p className="text-sm text-yellow-600 mt-1">Streak maintained</p>
+											</div>
+											<Medal className="h-6 w-6 text-yellow-500 hidden md:block" />
 										</div>
-										<div className="flex-1">
-											<p className="font-medium text-gray-800">
-												Within 15 points: <span className="font-black text-yellow-600">CLOSE!</span>
-											</p>
-											<p className="text-sm text-yellow-600 mt-1">Streak maintained</p>
-										</div>
-										<Medal className="h-6 w-6 text-yellow-500 hidden md:block" />
-									</div>
-								</motion.div>
+									</motion.div>
 
-								{/* Rule 5 */}
-								<motion.div
-									className="rounded-lg border-2 border-red-300 bg-gradient-to-r from-red-50 to-orange-50 m-4 p-3 shadow-sm"
-									whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
-								>
-									<div className="flex items-center gap-3">
-										<div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-400 text-white font-bold shadow-sm">
-											5
+									{/* Rule 5 */}
+									<motion.div
+										className="rounded-lg border-2 border-red-300 bg-gradient-to-r from-red-50 to-orange-50 m-4 p-3 shadow-sm"
+										whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+									>
+										<div className="flex items-center gap-3">
+											<div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-400 text-white font-bold shadow-sm">
+												5
+											</div>
+											<div className="flex-1">
+												<p className="font-medium text-gray-800">
+													More than 15 points off: <span className="font-black text-red-600">INCORRECT</span>
+												</p>
+												<p className="text-sm text-red-600 mt-1">Streak reset to 0</p>
+											</div>
+											<AlertTriangle className="h-6 w-6 text-red-500 hidden md:block" />
 										</div>
-										<div className="flex-1">
-											<p className="font-medium text-gray-800">
-												More than 15 points off: <span className="font-black text-red-600">INCORRECT</span>
-											</p>
-											<p className="text-sm text-red-600 mt-1">Streak reset to 0</p>
-										</div>
-										<AlertTriangle className="h-6 w-6 text-red-500 hidden md:block" />
-									</div>
-								</motion.div>
+									</motion.div>
 
-								{/* Rule 6 */}
-								<motion.div
-									className="rounded-lg border-2 border-cyan-300 bg-gradient-to-r from-cyan-50 to-blue-50 m-4 p-3 shadow-sm"
-									whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
-								>
-									<div className="flex items-center gap-3">
-										<div className="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-400 text-white font-bold shadow-sm">
-											6
+									{/* Rule 6 */}
+									<motion.div
+										className="rounded-lg border-2 border-cyan-300 bg-gradient-to-r from-cyan-50 to-blue-50 m-4 p-3 shadow-sm"
+										whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+									>
+										<div className="flex items-center gap-3">
+											<div className="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-400 text-white font-bold shadow-sm">
+												6
+											</div>
+											<p className="font-medium text-gray-800 flex-1">Come back tomorrow for a new challenge!</p>
+											<RefreshCw className="h-6 w-6 text-cyan-500 hidden md:block" />
 										</div>
-										<p className="font-medium text-gray-800 flex-1">Come back tomorrow for a new challenge!</p>
-										<RefreshCw className="h-6 w-6 text-cyan-500 hidden md:block" />
-									</div>
+									</motion.div>
 								</motion.div>
 							</motion.div>
 						</motion.div>
@@ -365,7 +381,7 @@ export function DailyTrailerGame({ movie }: DailyTrailerGameProps) {
 						frameBorder="0"
 						allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
 						allowFullScreen
-					></iframe>
+					/>
 				</div>
 
 				{/* Game Content */}
@@ -384,12 +400,8 @@ export function DailyTrailerGame({ movie }: DailyTrailerGameProps) {
 							<Slider
 								min={0}
 								max={100}
-								value={guess}
-								onChange={(value: number | number[]) => {
-									if (!hasGuessed) {
-										setGuess(typeof value === 'number' ? value : 50);
-									}
-								}}
+								value={gameState.guess}
+								onChange={handleGuessChange}
 								railStyle={{ backgroundColor: '#E9D5FF', height: 10 }}
 								trackStyle={{ backgroundColor: '#A855F7', height: 10 }}
 								handleStyle={{
@@ -399,16 +411,16 @@ export function DailyTrailerGame({ movie }: DailyTrailerGameProps) {
 									marginTop: -7,
 									backgroundColor: '#ffffff',
 								}}
-								disabled={hasGuessed}
+								disabled={gameState.hasGuessed}
 							/>
 
 							<div className="mt-4 text-center">
-								<span className="text-3xl font-black text-purple-600">{guess}</span>
+								<span className="text-3xl font-black text-purple-600">{gameState.guess}</span>
 								<span className="text-xl font-bold text-purple-400">/100</span>
 							</div>
 						</div>
 
-						{!hasGuessed ? (
+						{!gameState.hasGuessed ? (
 							<motion.button
 								onClick={handleSubmitGuess}
 								disabled={isSubmitting}
@@ -418,7 +430,7 @@ export function DailyTrailerGame({ movie }: DailyTrailerGameProps) {
 							>
 								<span className="relative flex items-center justify-center rounded-md bg-white px-8 py-3 text-center font-bold tracking-wide text-gray-900 transition group-hover:bg-transparent group-hover:text-white">
 									{isSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-									{isSubmitting ? 'SUBMITTING...' : 'SUBMIT GUESS'}{' '}
+									{isSubmitting ? 'SUBMITTING...' : 'SUBMIT GUESS'}
 								</span>
 							</motion.button>
 						) : (
@@ -427,20 +439,25 @@ export function DailyTrailerGame({ movie }: DailyTrailerGameProps) {
 								animate={{ opacity: 1, y: 0 }}
 								transition={{ duration: 0.5 }}
 								className={`rounded-lg border-2 p-4 text-center ${
-									result === 'correct'
+									gameState.result === 'correct'
 										? 'border-green-300 bg-green-50'
-										: result === 'close'
+										: gameState.result === 'close'
 										? 'border-yellow-300 bg-yellow-50'
 										: 'border-red-300 bg-red-50'
 								}`}
 							>
+								{/* Result content */}
 								<h3 className="text-lg font-bold">
-									{result === 'correct' ? 'CORRECT!' : result === 'close' ? 'CLOSE!' : 'TRY AGAIN TOMORROW!'}
+									{gameState.result === 'correct'
+										? 'CORRECT!'
+										: gameState.result === 'close'
+										? 'CLOSE!'
+										: 'TRY AGAIN TOMORROW!'}
 								</h3>
 								<p className="text-sm">
-									{result === 'correct'
+									{gameState.result === 'correct'
 										? 'You guessed within 5 points of the actual rating!'
-										: result === 'close'
+										: gameState.result === 'close'
 										? 'You were within 15 points of the actual rating.'
 										: 'Your guess was more than 15 points off.'}
 								</p>
@@ -451,12 +468,13 @@ export function DailyTrailerGame({ movie }: DailyTrailerGameProps) {
 									</div>
 									<div className="flex items-center">
 										<Trophy className="h-5 w-5 text-purple-500" />
-										<span className="ml-1 font-bold">Streak: {streak}</span>
+										<span className="ml-1 font-bold">Streak: {gameState.streak}</span>
 									</div>
 								</div>
 							</motion.div>
 						)}
 
+						{/* Next trailer countdown */}
 						<div className="rounded-lg border-2 border-purple-300 bg-white/50 p-4">
 							<h3 className="mb-2 font-bold text-purple-600">Next Trailer In</h3>
 							<div className="flex items-center gap-2">
@@ -466,154 +484,113 @@ export function DailyTrailerGame({ movie }: DailyTrailerGameProps) {
 						</div>
 					</div>
 
-					{/* Right Column - Results */}
+					{/* Right Column - Results/Leaderboard */}
 					<div className="flex flex-col gap-4">
-						{hasGuessed ? (
-							<>
-								{/* Tab Navigation */}
-								<div className="flex rounded-lg border-2 border-purple-300 bg-white/50 p-1">
-									<motion.button
-										onClick={() => setActiveTab('info')}
-										whileTap={{ scale: 0.97 }}
-										className={`flex-1 rounded-md py-2 font-bold transition cursor-pointer ${
-											activeTab === 'info' ? 'bg-purple-500 text-white' : 'hover:bg-purple-100'
-										}`}
-									>
-										MOVIE INFO
-									</motion.button>
-									<motion.button
-										onClick={() => setActiveTab('leaderboard')}
-										whileTap={{ scale: 0.97 }}
-										className={`flex-1 rounded-md py-2 font-bold transition cursor-pointer ${
-											activeTab === 'leaderboard' ? 'bg-purple-500 text-white' : 'hover:bg-purple-100'
-										}`}
-									>
-										LEADERBOARD
-									</motion.button>
-								</div>
-
-								{/* Content based on active tab */}
-								<AnimatePresence mode="wait">
-									{activeTab === 'info' && hasGuessed ? (
-										<motion.div
-											key="info"
-											initial={{ opacity: 0, x: -20 }}
-											animate={{ opacity: 1, x: 0 }}
-											exit={{ opacity: 0, x: 20 }}
-											transition={{ duration: 0.3 }}
-										>
-											<h2 className="text-xl font-black uppercase tracking-wider text-gray-800">{movie.title}</h2>
-
-											<div className="relative h-auto w-full mt-4">
-												<div className="absolute -inset-2 rounded-xl bg-gradient-to-r from-pink-400 via-purple-400 to-cyan-400 opacity-75 blur" />
-												<img
-													src={
-														movie.posterPath
-															? `https://image.tmdb.org/t/p/w500${movie.posterPath}`
-															: '/movie-placeholder.jpg'
-													}
-													alt={movie.title}
-													className="relative h-full w-full rounded-lg object-cover"
-												/>
-											</div>
-
-											<div className="grid grid-cols-2 gap-4 mt-4">
-												<div className="rounded-lg border-2 border-purple-300 bg-white/50 p-3 text-center">
-													<Calendar className="mx-auto h-5 w-5 text-purple-500" />
-													<div className="mt-1 text-sm font-bold text-purple-600">
-														{formatDistanceToNow(new Date(movie.releaseDate), { addSuffix: true })}
-													</div>
-													<div className="text-xs text-gray-600">Released</div>
-												</div>
-												<div className="rounded-lg border-2 border-purple-300 bg-white/50 p-3 text-center">
-													<TrendingUp className="mx-auto h-5 w-5 text-purple-500" />
-													<div className="mt-1 text-sm font-bold text-purple-600">{movie.rating}</div>
-													<div className="text-xs text-gray-600">Rating</div>
-												</div>
-											</div>
-										</motion.div>
-									) : activeTab === 'leaderboard' ? (
-										<motion.div
-											key="leaderboard"
-											initial={{ opacity: 0, x: 20 }}
-											animate={{ opacity: 1, x: 0 }}
-											exit={{ opacity: 0, x: -20 }}
-											transition={{ duration: 0.3 }}
-										>
-											<h2 className="text-xl font-black uppercase tracking-wider text-gray-800">LEADERBOARD</h2>
-											<div className="flex-1 rounded-lg border-2 border-purple-300 bg-white/50 p-4 mt-4">
-												<div className="space-y-2">
-													{leaderboard.length > 0 ? (
-														leaderboard.map((entry, index) => (
-															<motion.div
-																key={index}
-																initial={{ opacity: 0, y: 10 }}
-																animate={{ opacity: 1, y: 0 }}
-																transition={{ delay: index * 0.05 }}
-																className="flex items-center justify-between border-b border-purple-100 pb-2 last:border-0"
-															>
-																<div className="flex items-center gap-2">
-																	<span className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-400 text-xs font-bold text-white">
-																		{index + 1}
-																	</span>
-																	<span className="font-bold">{entry.username}</span>
-																</div>
-																<div className="flex items-center gap-1">
-																	<Trophy
-																		className={`h-4 w-4 ${
-																			index < 3 ? 'text-yellow-400' : 'text-purple-400'
-																		}`}
-																	/>
-																	<span className="font-mono">{entry.current_streak}</span>
-																</div>
-															</motion.div>
-														))
-													) : (
-														<div className="text-center font-mono text-gray-500">
-															No players yet. Be the first!
-														</div>
-													)}
-												</div>
-											</div>
-										</motion.div>
-									) : null}
-								</AnimatePresence>
-							</>
-						) : (
-							<>
-								<h2 className="text-xl font-black uppercase tracking-wider text-gray-800">LEADERBOARD</h2>
-								<div className="flex-1 rounded-lg border-2 border-purple-300 bg-white/50 p-4">
-									<div className="space-y-2">
-										{leaderboard.length > 0 ? (
-											leaderboard.map((entry, index) => (
-												<motion.div
-													key={index}
-													initial={{ opacity: 0, y: 10 }}
-													animate={{ opacity: 1, y: 0 }}
-													transition={{ delay: index * 0.05 }}
-													className="flex items-center justify-between border-b border-purple-100 pb-2 last:border-0"
-												>
-													<div className="flex items-center gap-2">
-														<span className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-400 text-xs font-bold text-white">
-															{index + 1}
-														</span>
-														<span className="font-bold">{entry.username}</span>
-													</div>
-													<div className="flex items-center gap-1">
-														<Trophy
-															className={`h-4 w-4 ${index < 3 ? 'text-yellow-400' : 'text-purple-400'}`}
-														/>
-														<span className="font-mono">{entry.current_streak}</span>
-													</div>
-												</motion.div>
-											))
-										) : (
-											<div className="text-center font-mono text-gray-500">No players yet. Be the first!</div>
-										)}
-									</div>
-								</div>
-							</>
+						{gameState.hasGuessed && (
+							<div className="flex rounded-lg border-2 border-purple-300 bg-white/50 p-1">
+								<motion.button
+									onClick={() => setActiveTab('info')}
+									whileTap={{ scale: 0.97 }}
+									className={`flex-1 rounded-md py-2 font-bold transition cursor-pointer ${
+										activeTab === 'info' ? 'bg-purple-500 text-white' : 'hover:bg-purple-100'
+									}`}
+								>
+									MOVIE INFO
+								</motion.button>
+								<motion.button
+									onClick={() => setActiveTab('leaderboard')}
+									whileTap={{ scale: 0.97 }}
+									className={`flex-1 rounded-md py-2 font-bold transition cursor-pointer ${
+										activeTab === 'leaderboard' ? 'bg-purple-500 text-white' : 'hover:bg-purple-100'
+									}`}
+								>
+									LEADERBOARD
+								</motion.button>
+							</div>
 						)}
+
+						{/* Content based on active tab */}
+						<AnimatePresence mode="wait">
+							{activeTab === 'info' && gameState.hasGuessed ? (
+								<motion.div
+									key="info"
+									initial={{ opacity: 0, x: -20 }}
+									animate={{ opacity: 1, x: 0 }}
+									exit={{ opacity: 0, x: 20 }}
+									transition={{ duration: 0.3 }}
+								>
+									<h2 className="text-xl font-black uppercase tracking-wider text-gray-800">{movie.title}</h2>
+
+									<div className="relative h-auto w-full mt-4">
+										<div className="absolute -inset-2 rounded-xl bg-gradient-to-r from-pink-400 via-purple-400 to-cyan-400 opacity-75 blur" />
+										<img
+											src={
+												movie.posterPath
+													? `https://image.tmdb.org/t/p/w500${movie.posterPath}`
+													: '/movie-placeholder.jpg'
+											}
+											alt={movie.title}
+											className="relative h-full w-full rounded-lg object-cover"
+										/>
+									</div>
+
+									<div className="grid grid-cols-2 gap-4 mt-4">
+										<div className="rounded-lg border-2 border-purple-300 bg-white/50 p-3 text-center">
+											<Calendar className="mx-auto h-5 w-5 text-purple-500" />
+											<div className="mt-1 text-sm font-bold text-purple-600">
+												{formatDistanceToNow(new Date(movie.releaseDate), { addSuffix: true })}
+											</div>
+											<div className="text-xs text-gray-600">Released</div>
+										</div>
+										<div className="rounded-lg border-2 border-purple-300 bg-white/50 p-3 text-center">
+											<TrendingUp className="mx-auto h-5 w-5 text-purple-500" />
+											<div className="mt-1 text-sm font-bold text-purple-600">{movie.rating}</div>
+											<div className="text-xs text-gray-600">Rating</div>
+										</div>
+									</div>
+								</motion.div>
+							) : (
+								<motion.div
+									key="leaderboard"
+									initial={{ opacity: 0, x: 20 }}
+									animate={{ opacity: 1, x: 0 }}
+									exit={{ opacity: 0, x: -20 }}
+									transition={{ duration: 0.3 }}
+								>
+									<h2 className="text-xl font-black uppercase tracking-wider text-gray-800">LEADERBOARD</h2>
+									<div className="flex-1 rounded-lg border-2 border-purple-300 bg-white/50 p-4 mt-4">
+										<div className="space-y-2">
+											{leaderboard.length > 0 ? (
+												leaderboard.map((entry, index) => (
+													<motion.div
+														key={index}
+														initial={{ opacity: 0, y: 10 }}
+														animate={{ opacity: 1, y: 0 }}
+														transition={{ delay: index * 0.05 }}
+														className="flex items-center justify-between border-b border-purple-100 pb-2 last:border-0"
+													>
+														<div className="flex items-center gap-2">
+															<span className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-400 text-xs font-bold text-white">
+																{index + 1}
+															</span>
+															<span className="font-bold">{entry.username}</span>
+														</div>
+														<div className="flex items-center gap-1">
+															<Trophy
+																className={`h-4 w-4 ${index < 3 ? 'text-yellow-400' : 'text-purple-400'}`}
+															/>
+															<span className="font-mono">{entry.current_streak}</span>
+														</div>
+													</motion.div>
+												))
+											) : (
+												<div className="text-center font-mono text-gray-500">No players yet. Be the first!</div>
+											)}
+										</div>
+									</div>
+								</motion.div>
+							)}
+						</AnimatePresence>
 					</div>
 				</div>
 			</motion.div>
