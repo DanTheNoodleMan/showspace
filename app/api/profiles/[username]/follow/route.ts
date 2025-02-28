@@ -1,14 +1,20 @@
 import { createClient } from '@/lib/supabase/server';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { checkAuthenticatedApi } from '@/lib/auth/api-auth';
 
-export async function POST(request: Request, { params }: { params: { username: string } }) {
+interface RouteParams {
+	params: {
+		username: string;
+	};
+}
+
+export async function POST(request: NextRequest, context: RouteParams) {
 	try {
 		const { user, error: authError } = await checkAuthenticatedApi();
 		if (authError) return authError;
 
 		const supabase = await createClient();
-		const { username } = params;
+		const { username } = context.params;
 
 		// Get the profile to follow
 		const { data: profileToFollow, error: profileError } = await supabase
@@ -48,13 +54,13 @@ export async function POST(request: Request, { params }: { params: { username: s
 	}
 }
 
-export async function DELETE(request: Request, { params }: { params: { username: string } }) {
+export async function DELETE(request: NextRequest, context: RouteParams) {
 	try {
 		const { user, error: authError } = await checkAuthenticatedApi();
 		if (authError) return authError;
 
 		const supabase = await createClient();
-		const { username } = params;
+		const { username } = context.params;
 
 		// Get the profile to unfollow
 		const { data: profileToUnfollow, error: profileError } = await supabase
