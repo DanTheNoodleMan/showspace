@@ -5,9 +5,9 @@ import { Connections } from './Connections';
 
 interface ConnectionsPageProps {
 	params: Promise<{ username: string }>;
-	searchParams: {
+	searchParams: Promise<{
 		tab?: 'following' | 'followers';
-	};
+	}>;
 }
 
 async function getConnectionsData(username: string) {
