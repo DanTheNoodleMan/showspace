@@ -10,6 +10,7 @@ interface EpisodeRatingProps {
 	showId: number;
 	episodeId: number;
 	episodeNumber: number;
+	seasonNumber: number;
 	initialRating?: number; // Stored as 0-5 in database
 	initialReview?: {
 		content: string;
@@ -17,7 +18,7 @@ interface EpisodeRatingProps {
 	};
 }
 
-export function EpisodeRating({ showId, episodeId, episodeNumber, initialRating, initialReview }: EpisodeRatingProps) {
+export function EpisodeRating({ showId, episodeId, episodeNumber, seasonNumber, initialRating, initialReview }: EpisodeRatingProps) {
 	const [rating, setRating] = useState<number>(initialRating || 0);
 	const [hoverRating, setHoverRating] = useState<number>(0);
 	const [isReviewOpen, setIsReviewOpen] = useState(false);
@@ -80,6 +81,8 @@ export function EpisodeRating({ showId, episodeId, episodeNumber, initialRating,
 					tmdb_id: episodeId,
 					parent_tmdb_id: showId,
 					content_type: "episode",
+					season_number: seasonNumber,
+					episode_number: episodeNumber,
 					content: review,
 					rating: newRating, // Store directly as 0-5
 					contains_spoilers: containsSpoilers,
@@ -116,6 +119,8 @@ export function EpisodeRating({ showId, episodeId, episodeNumber, initialRating,
 					tmdb_id: episodeId,
 					parent_tmdb_id: showId,
 					content_type: "episode",
+					season_number: seasonNumber,
+					episode_number: episodeNumber,
 					content: review,
 					rating: rating,
 					contains_spoilers: containsSpoilers,

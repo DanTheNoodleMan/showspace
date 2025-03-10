@@ -1,6 +1,6 @@
 // /app/api/episodes/[id]/route.ts
 import { NextResponse } from "next/server";
-import { TMDB_CONFIG } from "@/config/tmdb";
+import { tmdbService } from "@/services/tmdb";
 
 interface RouteParams {
 	params: Promise<{ id: string }>;
@@ -8,37 +8,28 @@ interface RouteParams {
 
 export async function GET(request: Request, { params }: RouteParams) {
 	try {
+		const { searchParams } = new URL(request.url);
 		const resolvedParams = await params;
-		const episodeId = resolvedParams.id;
 
-		// Fetch episode details from TMDB
-		const response = await fetch(`${TMDB_CONFIG.baseUrl}/tv/episode/${episodeId}?language=${TMDB_CONFIG.defaultLanguage}`, {
-			headers: {
-				Authorization: `Bearer ${TMDB_CONFIG.apiToken}`,
-				Accept: "application/json",
-			},
-		});
+		const showId = parseInt(searchParams.get("showId") || "0");
+		const seasonNumber = parseInt(searchParams.get("seasonNumber") || "0");
+		const episodeNumber = parseInt(searchParams.get("episodeNumber") || "0");
 
-		if (!response.ok) {
-			throw new Error("Failed to fetch episode details");
+		if (!showId || !seasonNumber || !episodeNumber) {
+			return NextResponse.json({ error: "Missing required parameters" }, { status: 400 });
 		}
 
-		const data = await response.json();
+		const episode = await tmdbService.getEpisodeDetails(showId, seasonNumber, episodeNumber);
 
 		return NextResponse.json({
 			episode: {
-				id: data.id,
-				name: data.name,
-				overview: data.overview,
-				episode_number: data.episode_number,
-				season_number: data.season_number,
-				still_path: data.still_path,
-				air_date: data.air_date,
-				runtime: data.runtime,
+				name: episode.name,
+				seasonNumber,
+				episodeNumber,
 			},
 		});
 	} catch (error) {
-		console.error("Error fetching episode details:", error);
-		return NextResponse.json({ error: "Failed to fetch episode details" }, { status: 500 });
+		console.error("Error fetching episode:", error);
+		return NextResponse.json({ error: "Failed to fetch episode" }, { status: 500 });
 	}
 }

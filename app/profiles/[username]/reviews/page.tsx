@@ -44,6 +44,7 @@ async function getReviewsData(username: string) {
 export default async function UserReviewsPage({ params }: ReviewsPageProps) {
 	const resolvedParams = await params;
 	const data = await getReviewsData(resolvedParams.username);
+	console.log(data);
 
 	return (
 		<div className="min-h-screen bg-gradient-to-b from-pink-100 via-purple-100 to-cyan-100 pt-8">

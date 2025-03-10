@@ -64,6 +64,10 @@ class TMDBService {
 			`/search/tv?query=${encodeURIComponent(query)}&page=${page}&language=${TMDB_CONFIG.defaultLanguage}`
 		);
 	}
+
+	public async getEpisodeDetails(seriesId: number, seasonNumber: number, episodeNumber: number): Promise<TMDBEpisode> {
+		return this.fetchFromTMDB<TMDBEpisode>(`/tv/${seriesId}/season/${seasonNumber}/episode/${episodeNumber}?language=${TMDB_CONFIG.defaultLanguage}`);
+	}
 }
 
 export const tmdbService = TMDBService.getInstance();

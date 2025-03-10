@@ -65,6 +65,7 @@ export interface TMDBEpisode {
 	name: string;
 	overview: string;
 	episode_number: number;
+	season_number: number;
 	air_date: string;
 	still_path: string | null;
 	runtime: number;

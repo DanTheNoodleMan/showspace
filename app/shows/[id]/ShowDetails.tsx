@@ -460,6 +460,7 @@ export function ShowDetails({ showId }: ShowDetailsProps) {
 															showId={show.id}
 															episodeId={episode.id}
 															episodeNumber={episode.episode_number}
+															seasonNumber={season.season_number}
 															initialRating={episode.userRating}
 															initialReview={episode.userReview}
 														/>
