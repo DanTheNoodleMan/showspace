@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
-import { Loader2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
+import React, { useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 
 interface WatchStatusProps {
 	showId: number;
@@ -13,11 +13,18 @@ interface WatchStatusProps {
 }
 
 export function WatchStatus({ showId, initialStatus, onStatusChange }: WatchStatusProps) {
-	const [status, setStatus] = useState(initialStatus || '');
+	const [status, setStatus] = useState(initialStatus || "");
 	const [isLoading, setIsLoading] = useState(false);
 	const { user, isLoading: authLoading } = useAuth();
 	const router = useRouter();
 	const supabase = createClient();
+
+	const watchStatusOptions = [
+		{ value: "watching", label: "Watching" },
+		{ value: "completed", label: "Completed" },
+		{ value: "plan to watch", label: "Plan to Watch" },
+		{ value: "dropped", label: "Dropped" },
+	];
 
 	const handleStatusChange = async (newStatus: string) => {
 		// Check authentication first
@@ -29,28 +36,60 @@ export function WatchStatus({ showId, initialStatus, onStatusChange }: WatchStat
 
 		setIsLoading(true);
 		try {
-			if (newStatus === status) {
-				// If clicking the active status again, remove it
-				await supabase.from('watch_status').delete().eq('user_id', user.id).eq('tmdb_id', showId).eq('content_type', 'show');
-				setStatus('');
-				if (onStatusChange) onStatusChange('');
+			const newStatusLower = newStatus.toLowerCase();
+
+			// First, check if a record exists
+			const { data: existingStatus } = await supabase
+				.from("watch_status")
+				.select("status")
+				.eq("user_id", user.id)
+				.eq("tmdb_id", showId)
+				.eq("content_type", "show")
+				.single();
+
+			if (existingStatus) {
+				if (newStatusLower === existingStatus.status) {
+					console.log("Delete:", existingStatus.status, newStatusLower);
+
+					// If clicking the active status again, remove it
+					await supabase.from("watch_status").delete().eq("user_id", user.id).eq("tmdb_id", showId).eq("content_type", "show");
+
+					setStatus("");
+					if (onStatusChange) onStatusChange("");
+				} else {
+					console.log("UPDATE:", existingStatus.status, newStatusLower);
+
+					// Update existing status
+					await supabase
+						.from("watch_status")
+						.update({
+							status: newStatusLower,
+							updated_at: new Date().toISOString(),
+						})
+						.eq("user_id", user.id)
+						.eq("tmdb_id", showId)
+						.eq("content_type", "show");
+
+					setStatus(newStatusLower);
+					if (onStatusChange) onStatusChange(newStatusLower);
+				}
 			} else {
-				// Otherwise, update or insert new status
-				const { error } = await supabase.from('watch_status').upsert({
+				console.log("INSERT:", newStatusLower);
+
+				// Insert new status
+				await supabase.from("watch_status").insert({
 					user_id: user.id,
 					tmdb_id: showId,
-					content_type: 'show',
-					status: newStatus,
+					content_type: "show",
+					status: newStatusLower,
 					updated_at: new Date().toISOString(),
 				});
 
-				if (error) throw error;
-
-				setStatus(newStatus);
-				if (onStatusChange) onStatusChange(newStatus);
+				setStatus(newStatusLower);
+				if (onStatusChange) onStatusChange(newStatusLower);
 			}
 		} catch (error) {
-			console.error('Error updating watch status:', error);
+			console.error("Error updating watch status:", error);
 		} finally {
 			setIsLoading(false);
 		}
@@ -89,17 +128,17 @@ export function WatchStatus({ showId, initialStatus, onStatusChange }: WatchStat
 				</div>
 			) : (
 				<>
-					{['Watching', 'Completed', 'Plan to Watch', 'Dropped'].map((statusOption) => (
+					{watchStatusOptions.map((option) => (
 						<button
-							key={statusOption}
-							onClick={() => handleStatusChange(statusOption)}
-							className={`rounded-lg px-4 py-2 font-bold transition ${
-								status === statusOption
-									? 'bg-purple-500 text-white'
-									: 'border-2 border-purple-300 bg-white/50 text-purple-600 hover:bg-purple-100'
+							key={option.value}
+							onClick={() => handleStatusChange(option.value)}
+							className={`rounded-lg px-4 py-2 font-bold transition cursor-pointer ${
+								status === option.value
+									? "bg-purple-500 text-white"
+									: "border-2 border-purple-300 bg-white/50 text-purple-600 hover:bg-purple-100"
 							}`}
 						>
-							{statusOption}
+							{option.label}
 						</button>
 					))}
 				</>
