@@ -2,18 +2,19 @@
 import { NextResponse } from "next/server";
 import { TMDB_CONFIG } from "@/config/tmdb";
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
-	try {
-		// Extract show ID from the path or query
-		const showId = request.url.includes("?") ? new URL(request.url).searchParams.get("showId") : null;
+interface RouteParams {
+	params: Promise<{ id: string }>;
+}
 
-		if (!showId) {
-			return NextResponse.json({ error: "Show ID is required" }, { status: 400 });
-		}
+export async function GET(request: Request, { params }: RouteParams) {
+	try {
+		const resolvedParams = await params;
+		const episodeId = resolvedParams.id;
 
 		// Fetch episode details from TMDB
-		const response = await fetch(`${TMDB_CONFIG.baseUrl}/tv/${showId}/episode/${params.id}?api_key=${TMDB_CONFIG.apiToken}`, {
+		const response = await fetch(`${TMDB_CONFIG.baseUrl}/tv/episode/${episodeId}?language=${TMDB_CONFIG.defaultLanguage}`, {
 			headers: {
+				Authorization: `Bearer ${TMDB_CONFIG.apiToken}`,
 				Accept: "application/json",
 			},
 		});
