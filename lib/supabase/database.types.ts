@@ -265,7 +265,7 @@ export type Database = {
           content_type: string
           created_at: string
           id: string
-          likes_count: number | null
+          likes_count: number
           parent_tmdb_id: number | null
           rating: number | null
           tmdb_id: number
@@ -278,7 +278,7 @@ export type Database = {
           content_type: string
           created_at?: string
           id?: string
-          likes_count?: number | null
+          likes_count?: number
           parent_tmdb_id?: number | null
           rating?: number | null
           tmdb_id: number
@@ -291,7 +291,7 @@ export type Database = {
           content_type?: string
           created_at?: string
           id?: string
-          likes_count?: number | null
+          likes_count?: number
           parent_tmdb_id?: number | null
           rating?: number | null
           tmdb_id?: number

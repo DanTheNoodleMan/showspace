@@ -53,7 +53,7 @@ export function StatsGrid({ stats, className = '', username }: StatsGridProps) {
 			icon: Star,
 			label: 'Reviews',
 			value: stats.reviewsWritten,
-			href: "",
+			href: `/profiles/${username}/reviews`,
 		},
 	];
 

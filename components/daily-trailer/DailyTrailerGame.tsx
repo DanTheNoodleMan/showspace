@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { createClient } from '@/lib/supabase/client';
-import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import {
 	Star,
 	Trophy,
@@ -19,10 +19,10 @@ import {
 	Medal,
 	AlertTriangle,
 	RefreshCw,
-} from 'lucide-react';
-import Slider from 'rc-slider';
-import 'rc-slider/assets/index.css';
-import { formatDistanceToNow } from 'date-fns';
+} from "lucide-react";
+import Slider from "rc-slider";
+import "rc-slider/assets/index.css";
+import { formatDistanceToNow } from "date-fns";
 
 interface DailyTrailerGameProps {
 	movie: {
@@ -38,8 +38,9 @@ interface DailyTrailerGameProps {
 interface GameState {
 	hasGuessed: boolean;
 	guess: number;
-	result: 'correct' | 'close' | 'incorrect' | null;
+	result: "correct" | "close" | "incorrect" | null;
 	streak: number;
+	isLoaded: boolean;
 }
 
 // Separate game state management
@@ -49,41 +50,55 @@ function useGameState(movieId: number) {
 		guess: 50,
 		result: null,
 		streak: 0,
+		isLoaded: false,
 	});
 	const { user } = useAuth();
 	const supabase = createClient();
 
 	useEffect(() => {
 		async function loadGameState() {
-			if (!user) return;
-
+			if (!user) {
+				setGameState((prev) => ({ ...prev, isLoaded: true }));
+				return;
+			}
 			try {
-				const { data } = await supabase
-					.from('daily_game_guesses')
-					.select('*')
-					.eq('user_id', user.id)
-					.eq('movie_id', movieId)
+				// First get the user's current streak
+				const { data: userData } = await supabase.from("profiles").select("current_streak").eq("id", user.id).single();
+
+				const { data: existingGuess } = await supabase
+					.from("daily_game_guesses")
+					.select("*")
+					.eq("user_id", user.id)
+					.eq("movie_id", movieId)
 					.single();
 
-				if (data) {
-					const difference = Math.abs(data.guess - data.actual_rating);
-					let result: 'correct' | 'close' | 'incorrect';
+				if (existingGuess) {
+					const difference = Math.abs(existingGuess.guess - existingGuess.actual_rating);
+					let result: "correct" | "close" | "incorrect";
 
-					if (difference <= 5) result = 'correct';
-					else if (difference <= 15) result = 'close';
-					else result = 'incorrect';
-
-					const { data: userData } = await supabase.from('profiles').select('current_streak').eq('id', user.id).single();
+					if (difference <= 5) result = "correct";
+					else if (difference <= 15) result = "close";
+					else result = "incorrect";
 
 					setGameState({
 						hasGuessed: true,
-						guess: data.guess,
+						guess: existingGuess.guess,
 						result,
 						streak: userData?.current_streak || 0,
+						isLoaded: true,
+					});
+				} else {
+					setGameState({
+						hasGuessed: false,
+						guess: 50,
+						result: null,
+						streak: userData?.current_streak || 0,
+						isLoaded: true,
 					});
 				}
 			} catch (error) {
-				console.error('Error loading game state:', error);
+				console.error("Error loading game state:", error);
+				setGameState((prev) => ({ ...prev, isLoaded: true }));
 			}
 		}
 
@@ -100,9 +115,9 @@ function useLeaderboard() {
 
 	const refreshLeaderboard = async () => {
 		const { data } = await supabase
-			.from('profiles')
-			.select('username, current_streak')
-			.order('current_streak', { ascending: false })
+			.from("profiles")
+			.select("username, current_streak")
+			.order("current_streak", { ascending: false })
 			.limit(10);
 
 		if (data) setLeaderboard(data);
@@ -123,9 +138,9 @@ export function DailyTrailerGame({ movie }: DailyTrailerGameProps) {
 	const [leaderboard, refreshLeaderboard] = useLeaderboard();
 
 	const [isSubmitting, setIsSubmitting] = useState(false);
-	const [activeTab, setActiveTab] = useState<'info' | 'leaderboard'>('info');
+	const [activeTab, setActiveTab] = useState<"info" | "leaderboard">("info");
 	const [rulesExpanded, setRulesExpanded] = useState(false);
-	const [remainingTime, setRemainingTime] = useState<string>('');
+	const [remainingTime, setRemainingTime] = useState<string>("");
 	const [showSpoilers, setShowSpoilers] = useState(false);
 
 	// Calculate remaining time
@@ -145,14 +160,14 @@ export function DailyTrailerGame({ movie }: DailyTrailerGameProps) {
 	}, []);
 
 	const handleGuessChange = (value: number | number[]) => {
-		if (!gameState.hasGuessed && typeof value === 'number') {
+		if (!gameState.hasGuessed && typeof value === "number") {
 			setGameState((prev) => ({ ...prev, guess: value }));
 		}
 	};
 
 	const handleSubmitGuess = async () => {
-		if (isSubmitting || !user) {
-			if (!user) router.push('/login?redirectTo=/daily-trailer');
+		if (isSubmitting || !user || !gameState.isLoaded) {
+			if (!user) router.push("/login?redirectTo=/daily-trailer");
 			return;
 		}
 
@@ -160,21 +175,21 @@ export function DailyTrailerGame({ movie }: DailyTrailerGameProps) {
 
 		try {
 			const difference = Math.abs(gameState.guess - movie.rating);
-			let result: 'correct' | 'close' | 'incorrect';
+			let result: "correct" | "close" | "incorrect";
 			let streakChange = 0;
 
 			if (difference <= 5) {
-				result = 'correct';
+				result = "correct";
 				streakChange = 1;
 			} else if (difference <= 15) {
-				result = 'close';
+				result = "close";
 				streakChange = 0;
 			} else {
-				result = 'incorrect';
+				result = "incorrect";
 				streakChange = -gameState.streak;
 			}
 
-			await supabase.from('daily_game_guesses').insert({
+			await supabase.from("daily_game_guesses").insert({
 				user_id: user.id,
 				movie_id: movie.id,
 				guess: gameState.guess,
@@ -184,7 +199,18 @@ export function DailyTrailerGame({ movie }: DailyTrailerGameProps) {
 			});
 
 			const newStreak = Math.max(0, gameState.streak + streakChange);
-			await supabase.from('profiles').update({ current_streak: newStreak }).eq('id', user.id);
+			// Update the database first
+			await Promise.all([
+				supabase.from("daily_game_guesses").insert({
+					user_id: user.id,
+					movie_id: movie.id,
+					guess: gameState.guess,
+					actual_rating: movie.rating,
+					difference,
+					result,
+				}),
+				supabase.from("profiles").update({ current_streak: newStreak }).eq("id", user.id),
+			]);
 
 			setGameState((prev) => ({
 				...prev,
@@ -193,10 +219,10 @@ export function DailyTrailerGame({ movie }: DailyTrailerGameProps) {
 				streak: newStreak,
 			}));
 
-			setActiveTab('info');
+			setActiveTab("info");
 			await refreshLeaderboard();
 		} catch (error) {
-			console.error('Error submitting guess:', error);
+			console.error("Error submitting guess:", error);
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -230,7 +256,7 @@ export function DailyTrailerGame({ movie }: DailyTrailerGameProps) {
 					<motion.div
 						initial={false}
 						animate={{ rotate: rulesExpanded ? 180 : 0 }}
-						transition={{ duration: 0.3, ease: 'easeInOut' }}
+						transition={{ duration: 0.3, ease: "easeInOut" }}
 						className="bg-purple-100 p-1.5 md:mr-4 rounded-full group-hover:bg-purple-200 transition-colors duration-300 hidden md:block"
 					>
 						<ChevronDown className="h-5 w-5 text-purple-500" />
@@ -241,16 +267,16 @@ export function DailyTrailerGame({ movie }: DailyTrailerGameProps) {
 					{rulesExpanded && (
 						<motion.div
 							initial={{ height: 0, opacity: 0 }}
-							animate={{ height: 'auto', opacity: 1 }}
+							animate={{ height: "auto", opacity: 1 }}
 							exit={{ height: 0, opacity: 0 }}
 							transition={{ duration: 0.3 }}
 							className="overflow-hidden"
 						>
 							<motion.div
 								initial={{ height: 0, opacity: 0 }}
-								animate={{ height: 'auto', opacity: 1 }}
+								animate={{ height: "auto", opacity: 1 }}
 								exit={{ height: 0, opacity: 0 }}
-								transition={{ duration: 0.3, ease: 'easeInOut' }}
+								transition={{ duration: 0.3, ease: "easeInOut" }}
 								className="overflow-hidden"
 							>
 								<motion.div
@@ -402,14 +428,14 @@ export function DailyTrailerGame({ movie }: DailyTrailerGameProps) {
 								max={100}
 								value={gameState.guess}
 								onChange={handleGuessChange}
-								railStyle={{ backgroundColor: '#E9D5FF', height: 10 }}
-								trackStyle={{ backgroundColor: '#A855F7', height: 10 }}
+								railStyle={{ backgroundColor: "#E9D5FF", height: 10 }}
+								trackStyle={{ backgroundColor: "#A855F7", height: 10 }}
 								handleStyle={{
-									borderColor: '#7E22CE',
+									borderColor: "#7E22CE",
 									height: 24,
 									width: 24,
 									marginTop: -7,
-									backgroundColor: '#ffffff',
+									backgroundColor: "#ffffff",
 								}}
 								disabled={gameState.hasGuessed}
 							/>
@@ -430,7 +456,7 @@ export function DailyTrailerGame({ movie }: DailyTrailerGameProps) {
 							>
 								<span className="relative flex items-center justify-center rounded-md bg-white px-8 py-3 text-center font-bold tracking-wide text-gray-900 transition group-hover:bg-transparent group-hover:text-white">
 									{isSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-									{isSubmitting ? 'SUBMITTING...' : 'SUBMIT GUESS'}
+									{isSubmitting ? "SUBMITTING..." : "SUBMIT GUESS"}
 								</span>
 							</motion.button>
 						) : (
@@ -439,27 +465,27 @@ export function DailyTrailerGame({ movie }: DailyTrailerGameProps) {
 								animate={{ opacity: 1, y: 0 }}
 								transition={{ duration: 0.5 }}
 								className={`rounded-lg border-2 p-4 text-center ${
-									gameState.result === 'correct'
-										? 'border-green-300 bg-green-50'
-										: gameState.result === 'close'
-										? 'border-yellow-300 bg-yellow-50'
-										: 'border-red-300 bg-red-50'
+									gameState.result === "correct"
+										? "border-green-300 bg-green-50"
+										: gameState.result === "close"
+										? "border-yellow-300 bg-yellow-50"
+										: "border-red-300 bg-red-50"
 								}`}
 							>
 								{/* Result content */}
 								<h3 className="text-lg font-bold">
-									{gameState.result === 'correct'
-										? 'CORRECT!'
-										: gameState.result === 'close'
-										? 'CLOSE!'
-										: 'TRY AGAIN TOMORROW!'}
+									{gameState.result === "correct"
+										? "CORRECT!"
+										: gameState.result === "close"
+										? "CLOSE!"
+										: "TRY AGAIN TOMORROW!"}
 								</h3>
 								<p className="text-sm">
-									{gameState.result === 'correct'
-										? 'You guessed within 5 points of the actual rating!'
-										: gameState.result === 'close'
-										? 'You were within 15 points of the actual rating.'
-										: 'Your guess was more than 15 points off.'}
+									{gameState.result === "correct"
+										? "You guessed within 5 points of the actual rating!"
+										: gameState.result === "close"
+										? "You were within 15 points of the actual rating."
+										: "Your guess was more than 15 points off."}
 								</p>
 								<div className="mt-2 flex justify-center gap-4">
 									<div className="flex items-center">
@@ -489,19 +515,19 @@ export function DailyTrailerGame({ movie }: DailyTrailerGameProps) {
 						{gameState.hasGuessed && (
 							<div className="flex rounded-lg border-2 border-purple-300 bg-white/50 p-1">
 								<motion.button
-									onClick={() => setActiveTab('info')}
+									onClick={() => setActiveTab("info")}
 									whileTap={{ scale: 0.97 }}
 									className={`flex-1 rounded-md py-2 font-bold transition cursor-pointer ${
-										activeTab === 'info' ? 'bg-purple-500 text-white' : 'hover:bg-purple-100'
+										activeTab === "info" ? "bg-purple-500 text-white" : "hover:bg-purple-100"
 									}`}
 								>
 									MOVIE INFO
 								</motion.button>
 								<motion.button
-									onClick={() => setActiveTab('leaderboard')}
+									onClick={() => setActiveTab("leaderboard")}
 									whileTap={{ scale: 0.97 }}
 									className={`flex-1 rounded-md py-2 font-bold transition cursor-pointer ${
-										activeTab === 'leaderboard' ? 'bg-purple-500 text-white' : 'hover:bg-purple-100'
+										activeTab === "leaderboard" ? "bg-purple-500 text-white" : "hover:bg-purple-100"
 									}`}
 								>
 									LEADERBOARD
@@ -511,7 +537,7 @@ export function DailyTrailerGame({ movie }: DailyTrailerGameProps) {
 
 						{/* Content based on active tab */}
 						<AnimatePresence mode="wait">
-							{activeTab === 'info' && gameState.hasGuessed ? (
+							{activeTab === "info" && gameState.hasGuessed ? (
 								<motion.div
 									key="info"
 									initial={{ opacity: 0, x: -20 }}
@@ -527,7 +553,7 @@ export function DailyTrailerGame({ movie }: DailyTrailerGameProps) {
 											src={
 												movie.posterPath
 													? `https://image.tmdb.org/t/p/w500${movie.posterPath}`
-													: '/movie-placeholder.jpg'
+													: "/movie-placeholder.jpg"
 											}
 											alt={movie.title}
 											className="relative h-full w-full rounded-lg object-cover"
@@ -577,7 +603,7 @@ export function DailyTrailerGame({ movie }: DailyTrailerGameProps) {
 														</div>
 														<div className="flex items-center gap-1">
 															<Trophy
-																className={`h-4 w-4 ${index < 3 ? 'text-yellow-400' : 'text-purple-400'}`}
+																className={`h-4 w-4 ${index < 3 ? "text-yellow-400" : "text-purple-400"}`}
 															/>
 															<span className="font-mono">{entry.current_streak}</span>
 														</div>

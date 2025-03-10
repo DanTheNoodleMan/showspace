@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useRef } from 'react';
-import { Search, X, Loader2, Star, Tv2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
-import debounce from 'lodash/debounce';
-import { Show } from '@/types';
-import { getTMDBImageUrl } from '@/config/tmdb';
+import { useState, useEffect, useRef } from "react";
+import { Search, X, Loader2, Star, Tv2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
+import debounce from "lodash/debounce";
+import { Show } from "@/types";
+import { getTMDBImageUrl } from "@/config/tmdb";
 
 export function ShowSearch() {
-	const [query, setQuery] = useState('');
+	const [query, setQuery] = useState("");
 	const [shows, setShows] = useState<Show[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [isOpen, setIsOpen] = useState(false);
@@ -25,8 +25,8 @@ export function ShowSearch() {
 			}
 		}
 
-		document.addEventListener('mousedown', handleClickOutside);
-		return () => document.removeEventListener('mousedown', handleClickOutside);
+		document.addEventListener("mousedown", handleClickOutside);
+		return () => document.removeEventListener("mousedown", handleClickOutside);
 	}, []);
 
 	const searchShows = debounce(async (searchQuery: string) => {
@@ -42,7 +42,7 @@ export function ShowSearch() {
 			console.log(data);
 			setShows(data.popularityOrderedShows);
 		} catch (error) {
-			console.error('Error searching shows:', error);
+			console.error("Error searching shows:", error);
 		} finally {
 			setLoading(false);
 		}
@@ -71,7 +71,7 @@ export function ShowSearch() {
 				{query && (
 					<button
 						onClick={() => {
-							setQuery('');
+							setQuery("");
 							setShows([]);
 							setIsOpen(false);
 						}}
@@ -105,7 +105,7 @@ export function ShowSearch() {
 										<div className="h-16 w-12 flex-shrink-0 overflow-hidden rounded-lg">
 											{show.posterPath ? (
 												<img
-													src={getTMDBImageUrl(show.posterPath, 'poster', 'small')!}
+													src={getTMDBImageUrl(show.posterPath, "poster", "small")!}
 													alt={show.title}
 													className="h-full w-full object-cover"
 												/>
@@ -121,7 +121,7 @@ export function ShowSearch() {
 										</div>
 										<div className="flex items-center gap-1 px-2">
 											<Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-											<span className="font-mono text-sm">{show.rating.toFixed(1)}</span>
+											<span className="font-mono text-sm">{show.rating != 0.0 ? show.rating.toFixed(1) : "N/A"}</span>
 										</div>
 									</Link>
 								))}

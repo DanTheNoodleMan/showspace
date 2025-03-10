@@ -1,7 +1,7 @@
 // app/shows/[id]/ShowDetails.tsx
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import {
 	Star,
 	ChevronDown,
@@ -17,14 +17,17 @@ import {
 	Globe,
 	Play,
 	ExternalLink,
-} from 'lucide-react';
-import { getTMDBImageUrl } from '@/config/tmdb';
-import { formatDistanceToNow } from 'date-fns';
-import { ShowSkeleton } from './ShowSkeleton';
-import { WatchStatus } from '@/components/shows/WatchStatus';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
+} from "lucide-react";
+import { getTMDBImageUrl } from "@/config/tmdb";
+import { formatDistanceToNow } from "date-fns";
+import { ShowSkeleton } from "./ShowSkeleton";
+import { WatchStatus } from "@/components/shows/WatchStatus";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
+import EpisodeRating from "@/components/shows/EpisodeRating";
+import { EpisodeReviews } from "@/components/shows/EpisodeReviews";
+import SeasonRatingSummary from "@/components/shows/SeasonRatingSummary";
 
 interface ShowDetailsProps {
 	showId: string;
@@ -42,7 +45,7 @@ function calculateBingeTime(episodes: any[]) {
 	if (hours > 0) result.push(`${hours}h`);
 	if (minutes > 0) result.push(`${minutes}m`);
 
-	return result.join(' ');
+	return result.join(" ");
 }
 
 export function ShowDetails({ showId }: ShowDetailsProps) {
@@ -61,7 +64,7 @@ export function ShowDetails({ showId }: ShowDetailsProps) {
 				if (!response.ok) throw new Error(data.error);
 				setShow(data.show);
 			} catch (err) {
-				setError(err instanceof Error ? err.message : 'Failed to fetch show');
+				setError(err instanceof Error ? err.message : "Failed to fetch show");
 			} finally {
 				setLoading(false);
 			}
@@ -91,7 +94,7 @@ export function ShowDetails({ showId }: ShowDetailsProps) {
 						<div className="relative h-96 w-auto lg:w-64">
 							<div className="absolute -inset-2 max-w-68 rounded-xl bg-gradient-to-r from-pink-400 via-purple-400 to-cyan-400 opacity-75 blur" />
 							<img
-								src={getTMDBImageUrl(show.poster_path, 'poster', 'large')!}
+								src={getTMDBImageUrl(show.poster_path, "poster", "large")!}
 								alt={show.name}
 								className="relative h-full w-full rounded-lg object-cover"
 							/>
@@ -135,7 +138,7 @@ export function ShowDetails({ showId }: ShowDetailsProps) {
 								className="mb-2 flex items-center gap-2 rounded-lg border-2 border-purple-300 bg-white/50 px-4 py-2 font-bold text-purple-600 transition hover:bg-purple-100 cursor-pointer"
 							>
 								{showSpoilers ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-								{showSpoilers ? 'Hide Spoilers' : 'Show Spoilers'}
+								{showSpoilers ? "Hide Spoilers" : "Show Spoilers"}
 							</button>
 							<p className="font-mono text-gray-700">
 								{showSpoilers ? show.overview : 'Overview hidden to prevent spoilers. Click "Show Spoilers" to reveal.'}
@@ -269,7 +272,7 @@ export function ShowDetails({ showId }: ShowDetailsProps) {
 							<div key={creator.id} className="flex items-center gap-3">
 								{creator.profile_path && (
 									<img
-										src={getTMDBImageUrl(creator.profile_path, 'poster', 'small')!}
+										src={getTMDBImageUrl(creator.profile_path, "poster", "small")!}
 										alt={creator.name}
 										className="h-12 w-12 rounded-full object-cover"
 									/>
@@ -293,7 +296,7 @@ export function ShowDetails({ showId }: ShowDetailsProps) {
 							onClick={() => toggleSeason(season.season_number)}
 							className="flex w-full items-center justify-between p-6 cursor-pointer"
 							whileHover={{
-								backgroundColor: 'rgba(255, 255, 255, 0.2)',
+								backgroundColor: "rgba(255, 255, 255, 0.2)",
 								transition: { duration: 0.2 },
 							}}
 							whileTap={{ scale: 0.98 }}
@@ -304,13 +307,13 @@ export function ShowDetails({ showId }: ShowDetailsProps) {
 										initial={false}
 										animate={{
 											boxShadow: expandedSeasons[season.season_number]
-												? '0 0 10px 2px rgba(168, 85, 247, 0.5)'
-												: '0 0 0px 0px rgba(168, 85, 247, 0)',
+												? "0 0 10px 2px rgba(168, 85, 247, 0.5)"
+												: "0 0 0px 0px rgba(168, 85, 247, 0)",
 										}}
 										className="relative rounded-lg overflow-hidden"
 									>
 										<img
-											src={getTMDBImageUrl(season.poster_path, 'poster', 'small')!}
+											src={getTMDBImageUrl(season.poster_path, "poster", "small")!}
 											alt={season.name}
 											className="h-20 w-14 rounded-lg object-cover"
 										/>
@@ -329,7 +332,7 @@ export function ShowDetails({ showId }: ShowDetailsProps) {
 									<motion.h3
 										initial={false}
 										animate={{
-											color: expandedSeasons[season.season_number] ? '#6D28D9' : '#1F2937',
+											color: expandedSeasons[season.season_number] ? "#6D28D9" : "#1F2937",
 										}}
 										className="text-xl font-bold"
 									>
@@ -339,7 +342,7 @@ export function ShowDetails({ showId }: ShowDetailsProps) {
 										className="font-mono text-gray-600"
 										initial={false}
 										animate={{
-											color: expandedSeasons[season.season_number] ? '#8B5CF6' : '#4B5563',
+											color: expandedSeasons[season.season_number] ? "#8B5CF6" : "#4B5563",
 										}}
 									>
 										{season.episode_count} Episodes
@@ -350,9 +353,9 @@ export function ShowDetails({ showId }: ShowDetailsProps) {
 								initial={false}
 								animate={{
 									rotate: expandedSeasons[season.season_number] ? 180 : 0,
-									color: expandedSeasons[season.season_number] ? '#8B5CF6' : '#4B5563',
+									color: expandedSeasons[season.season_number] ? "#8B5CF6" : "#4B5563",
 								}}
-								transition={{ duration: 0.3, ease: 'easeInOut' }}
+								transition={{ duration: 0.3, ease: "easeInOut" }}
 							>
 								<ChevronDown className="h-6 w-6" />
 							</motion.div>
@@ -367,14 +370,22 @@ export function ShowDetails({ showId }: ShowDetailsProps) {
 									animate="expanded"
 									exit="collapsed"
 									variants={{
-										expanded: { height: 'auto', opacity: 1 },
+										expanded: { height: "auto", opacity: 1 },
 										collapsed: { height: 0, opacity: 0 },
 									}}
-									transition={{ duration: 0.4, ease: 'easeInOut' }}
+									transition={{ duration: 0.4, ease: "easeInOut" }}
 									className="overflow-hidden border-t-2 border-white/50"
 								>
 									<div className="p-6">
 										<div className="grid gap-4">
+											{/* Add Season Rating Summary at the top of each season */}
+											<div className="mb-4">
+												<SeasonRatingSummary
+													showId={show.id}
+													seasonId={season.id}
+													episodeIds={season.episodes.map((ep: any) => ep.id)}
+												/>
+											</div>
 											{season.episodes?.map((episode: any, index: number) => (
 												<motion.div
 													key={episode.id}
@@ -383,80 +394,78 @@ export function ShowDetails({ showId }: ShowDetailsProps) {
 													transition={{ delay: index * 0.05, duration: 0.3 }}
 													className="group relative rounded-lg border-2 border-white/50 bg-white/50 p-4 backdrop-blur-sm"
 													whileHover={{
-														backgroundColor: 'rgba(233, 213, 255, 0.5)',
-														borderColor: '#A78BFA',
+														backgroundColor: "rgba(233, 213, 255, 0.5)",
+														borderColor: "#A78BFA",
 														scale: 1.01,
 													}}
 												>
-													<div className="flex items-center justify-between">
-														<div className="flex-1">
-															<h4 className="font-bold group-hover:text-purple-700 transition-colors">
-																Episode {episode.episode_number} {showSpoilers ? `: ${episode.name}` : ''}
-															</h4>
-															{showSpoilers && (
-																<motion.p
-																	initial={{ opacity: 0 }}
-																	animate={{ opacity: 1 }}
-																	transition={{ delay: 0.2 }}
-																	className="mt-2 font-mono text-sm text-gray-600"
-																>
-																	{episode.overview || 'No description available.'}
-																</motion.p>
-															)}
+													{/* Episode Info Section */}
+													<div className="flex flex-col gap-4">
+														{/* Episode Header */}
+														<div className="flex items-start justify-between">
+															<div className="flex-1">
+																<h4 className="font-bold group-hover:text-purple-700 transition-colors">
+																	Episode {episode.episode_number}{" "}
+																	{showSpoilers ? `: ${episode.name}` : ""}
+																</h4>
 
-															{/* Add runtime information if available */}
-															{episode.runtime && (
-																<motion.div
-																	initial={{ opacity: 0 }}
-																	animate={{ opacity: 1 }}
-																	transition={{ delay: 0.1 }}
-																	className="mt-1 flex items-center text-xs text-gray-500"
-																>
-																	<Clock className="mr-1 h-3 w-3" />
-																	<span>{episode.runtime} min</span>
-																</motion.div>
+																{/* Air Date and Runtime */}
+																<div className="mt-1 flex items-center gap-4 text-sm text-gray-600">
+																	{episode.air_date && (
+																		<div className="flex items-center gap-1">
+																			<Calendar className="h-4 w-4" />
+																			<span>
+																				{new Date(episode.air_date).toLocaleDateString("en-US", {
+																					month: "short",
+																					day: "numeric",
+																					year: "numeric",
+																				})}
+																			</span>
+																		</div>
+																	)}
+																	{episode.runtime && (
+																		<div className="flex items-center gap-1">
+																			<Clock className="h-4 w-4" />
+																			<span>{episode.runtime} min</span>
+																		</div>
+																	)}
+																</div>
+															</div>
+
+															{/* Episode Rating Summary - Show aggregated rating if available */}
+															{episode.userRating && (
+																<div className="flex items-center gap-2 rounded-full bg-purple-100 px-3 py-1">
+																	<Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+																	<span className="font-bold text-purple-600">
+																		{episode.userRating}/5
+																	</span>
+																</div>
 															)}
 														</div>
-														<div className="flex items-center gap-2">
-															{/* Quick Rating */}
-															<div className="flex items-center">
-																{[1, 2, 3, 4, 5].map((rating) => (
-																	<motion.button
-																		key={rating}
-																		whileHover={{
-																			scale: 1.3,
-																			color: '#FBBF24',
-																			transition: { duration: 0.15 },
-																		}}
-																		whileTap={{ scale: 0.9 }}
-																		className="p-1 transition"
-																		onClick={(e) => {
-																			e.stopPropagation(); // Prevent season toggle
-																			// Check if user is logged in
-																			if (!show.userData) {
-																				router.push(`/login?redirectTo=/shows/${show.id}`);
-																				return;
-																			}
 
-																			// TODO: Implement rating
-																			console.log(
-																				`Rate episode ${episode.episode_number} with ${rating} stars`
-																			);
-																		}}
-																	>
-																		<Star
-																			className={`h-5 w-5 transition-all duration-200 ${
-																				rating <= (episode.userRating || 0)
-																					? 'fill-yellow-400 text-yellow-400'
-																					: rating <= (episode.userRating || 0) + 1 &&
-																					  episode.userRating
-																					? 'fill-yellow-200 text-yellow-200' // Subtle highlight for star next to rating
-																					: 'text-gray-300 group-hover:text-gray-400'
-																			}`}
-																		/>
-																	</motion.button>
-																))}
-															</div>
+														{/* Episode Overview */}
+														{showSpoilers && episode.overview && (
+															<motion.p
+																initial={{ opacity: 0 }}
+																animate={{ opacity: 1 }}
+																transition={{ delay: 0.2 }}
+																className="font-mono text-sm text-gray-600"
+															>
+																{episode.overview}
+															</motion.p>
+														)}
+
+														{/* Rating Component */}
+														<EpisodeRating
+															showId={show.id}
+															episodeId={episode.id}
+															episodeNumber={episode.episode_number}
+															initialRating={episode.userRating}
+															initialReview={episode.userReview}
+														/>
+														{/* Episode Reviews Component */}
+														<div className="mt-4 border-t border-purple-100 pt-4">
+															<EpisodeReviews showId={show.id} episodeId={episode.id} />
 														</div>
 													</div>
 												</motion.div>
