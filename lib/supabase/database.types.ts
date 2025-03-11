@@ -264,10 +264,12 @@ export type Database = {
           content: string
           content_type: string
           created_at: string
+          episode_number: number | null
           id: string
           likes_count: number
           parent_tmdb_id: number | null
           rating: number | null
+          season_number: string | null
           tmdb_id: number
           updated_at: string
           user_id: string
@@ -277,10 +279,12 @@ export type Database = {
           content: string
           content_type: string
           created_at?: string
+          episode_number?: number | null
           id?: string
           likes_count?: number
           parent_tmdb_id?: number | null
           rating?: number | null
+          season_number?: string | null
           tmdb_id: number
           updated_at?: string
           user_id: string
@@ -290,10 +294,12 @@ export type Database = {
           content?: string
           content_type?: string
           created_at?: string
+          episode_number?: number | null
           id?: string
           likes_count?: number
           parent_tmdb_id?: number | null
           rating?: number | null
+          season_number?: string | null
           tmdb_id?: number
           updated_at?: string
           user_id?: string
