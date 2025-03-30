@@ -28,6 +28,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import EpisodeRating from "@/components/shows/EpisodeRating";
 import { EpisodeReviews } from "@/components/shows/EpisodeReviews";
 import SeasonRatingSummary from "@/components/shows/SeasonRatingSummary";
+import WatchedButton from "@/components/shows/WatchedButton";
 
 interface ShowDetailsProps {
 	showId: string;
@@ -53,7 +54,7 @@ export function ShowDetails({ showId }: ShowDetailsProps) {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [expandedSeasons, setExpandedSeasons] = useState<Record<number, boolean>>({});
-	const [showSpoilers, setShowSpoilers] = useState(false);
+	const [showSpoilers, setShowSpoilers] = useState(true);
 	const router = useRouter();
 
 	useEffect(() => {
@@ -455,15 +456,23 @@ export function ShowDetails({ showId }: ShowDetailsProps) {
 															</motion.p>
 														)}
 
-														{/* Rating Component */}
-														<EpisodeRating
-															showId={show.id}
-															episodeId={episode.id}
-															episodeNumber={episode.episode_number}
-															seasonNumber={season.season_number}
-															initialRating={episode.userRating}
-															initialReview={episode.userReview}
-														/>
+														<div className="flex flex-row items-center justify-between">
+															{/* Rating Component */}
+															<EpisodeRating
+																showId={show.id}
+																episodeId={episode.id}
+																episodeNumber={episode.episode_number}
+																seasonNumber={season.season_number}
+																initialRating={episode.userRating}
+																initialReview={episode.userReview}
+															/>
+															<WatchedButton
+																showId={show.id}
+																seasonId={season.id}
+																episodeId={episode.id}
+																initialWatched={episode.userData?.watched}
+															/>
+														</div>
 														{/* Episode Reviews Component */}
 														<div className="mt-4 border-t border-purple-100 pt-4">
 															<EpisodeReviews showId={show.id} episodeId={episode.id} />

@@ -351,7 +351,9 @@ export type Database = {
       }
       watch_history: {
         Row: {
+          episode_number: number | null
           id: string
+          season_number: number | null
           season_tmdb_id: number
           show_tmdb_id: number
           tmdb_id: number
@@ -359,7 +361,9 @@ export type Database = {
           watched_at: string
         }
         Insert: {
+          episode_number?: number | null
           id?: string
+          season_number?: number | null
           season_tmdb_id: number
           show_tmdb_id: number
           tmdb_id: number
@@ -367,7 +371,9 @@ export type Database = {
           watched_at?: string
         }
         Update: {
+          episode_number?: number | null
           id?: string
+          season_number?: number | null
           season_tmdb_id?: number
           show_tmdb_id?: number
           tmdb_id?: number

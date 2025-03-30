@@ -1,14 +1,14 @@
 // components/layout/Navbar/MobileMenu.tsx
 
-import React, { useState, useEffect } from 'react';
-import { Menu, X, LogOut, User as UserIcon, Settings, List, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
-import { NavLink } from './NavLink';
-import { createClient } from '@/lib/supabase/client';
-import { useRouter, usePathname } from 'next/navigation';
-import { MobileMenuProps } from '@/types/navbar';
-import { UserSearch } from '@/components/shared/UserSearch';
+import React, { useState, useEffect } from "react";
+import { Menu, X, LogOut, User as UserIcon, Settings, List, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
+import { NavLink } from "./NavLink";
+import { createClient } from "@/lib/supabase/client";
+import { useRouter, usePathname } from "next/navigation";
+import { MobileMenuProps } from "@/types/navbar";
+import { UserSearch } from "@/components/shared/UserSearch";
 
-const PATHS_WITH_LOADING_OVERLAY = ['/profile', '/lists', '/settings', '/login', '/signup', '/daily-trailer,', '/'];
+const PATHS_WITH_LOADING_OVERLAY = ["/profile", "/lists", "/settings", "/login", "/signup", "/daily-trailer,", "/"];
 
 // Safety timeout to prevent infinite loading state (in milliseconds)
 const LOADING_TIMEOUT = 3000;
@@ -28,9 +28,9 @@ export function MobileMenu({ isOpen, onToggle, links, user }: MobileMenuProps) {
 				onToggle();
 			};
 
-			window.addEventListener('popstate', handleRouteChange);
+			window.addEventListener("popstate", handleRouteChange);
 			return () => {
-				window.removeEventListener('popstate', handleRouteChange);
+				window.removeEventListener("popstate", handleRouteChange);
 			};
 		}
 	}, [isOpen, onToggle]);
@@ -44,12 +44,12 @@ export function MobileMenu({ isOpen, onToggle, links, user }: MobileMenuProps) {
 	// Prevent scrolling when menu is open
 	useEffect(() => {
 		if (isOpen) {
-			document.body.style.overflow = 'hidden';
+			document.body.style.overflow = "hidden";
 		} else {
-			document.body.style.overflow = 'auto';
+			document.body.style.overflow = "auto";
 		}
 		return () => {
-			document.body.style.overflow = 'auto';
+			document.body.style.overflow = "auto";
 		};
 	}, [isOpen]);
 
@@ -103,14 +103,14 @@ export function MobileMenu({ isOpen, onToggle, links, user }: MobileMenuProps) {
 
 	// Get the name of the current page being loaded (for display in the loading overlay)
 	const getLoadingPageName = (): string => {
-		if (!navigatingPath) return 'Page';
+		if (!navigatingPath) return "Page";
 
 		// Extract page name from path
-		const pathParts = navigatingPath.split('/').filter(Boolean);
-		if (pathParts.length === 0) return 'Home';
+		const pathParts = navigatingPath.split("/").filter(Boolean);
+		if (pathParts.length === 0) return "Home";
 
 		// Convert to title case and replace hyphens with spaces
-		const pageName = pathParts[pathParts.length - 1].replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
+		const pageName = pathParts[pathParts.length - 1].replace(/-/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
 
 		return pageName;
 	};
@@ -140,7 +140,7 @@ export function MobileMenu({ isOpen, onToggle, links, user }: MobileMenuProps) {
 			{/* Side Menu */}
 			<div
 				className={`fixed top-0 right-0 bottom-0 w-3/4 max-w-xs bg-gradient-to-b from-pink-200 via-purple-200 to-cyan-200 z-50 transform transition-transform duration-300 ease-in-out ${
-					isOpen ? 'translate-x-0' : 'translate-x-full'
+					isOpen ? "translate-x-0" : "translate-x-full"
 				}`}
 			>
 				<div className="flex flex-col h-full">
@@ -157,7 +157,7 @@ export function MobileMenu({ isOpen, onToggle, links, user }: MobileMenuProps) {
 					{/* Menu Links */}
 					<div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
 						{links.map((link) => (
-							<div key={link.href} onClick={() => link.href !== '#' && handleNavigation(link.href)}>
+							<div key={link.href} onClick={() => link.href !== "#" && handleNavigation(link.href)}>
 								<NavLink {...link} />
 							</div>
 						))}
@@ -173,7 +173,7 @@ export function MobileMenu({ isOpen, onToggle, links, user }: MobileMenuProps) {
 									>
 										<div className="flex items-center gap-2">
 											<UserIcon className="h-5 w-5" />
-											<span>{user.user_metadata.username?.toUpperCase() || 'ACCOUNT'}</span>
+											<span>{user.user_metadata.username?.toUpperCase() || "ACCOUNT"}</span>
 										</div>
 										{userMenuOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
 									</button>
@@ -181,25 +181,25 @@ export function MobileMenu({ isOpen, onToggle, links, user }: MobileMenuProps) {
 									{/* User Menu Items */}
 									<div
 										className={`mt-2 space-y-2 pl-4 transition-all duration-200 ${
-											userMenuOpen ? 'max-h-60 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
+											userMenuOpen ? "max-h-60 opacity-100" : "max-h-0 opacity-0 overflow-hidden"
 										}`}
 									>
 										<button
-											onClick={() => handleNavigation('/profile')}
+											onClick={() => handleNavigation(`/profiles/${user.user_metadata.username}`)}
 											className="flex w-full items-center gap-2 rounded-lg bg-white/50 px-4 py-3 font-bold tracking-wide text-gray-700 hover:bg-white/80 transition text-left"
 										>
 											<UserIcon className="h-5 w-5" />
 											Profile
 										</button>
 										<button
-											onClick={() => handleNavigation('/lists')}
+											onClick={() => handleNavigation("/lists")}
 											className="flex w-full items-center gap-2 rounded-lg bg-white/50 px-4 py-3 font-bold tracking-wide text-gray-700 hover:bg-white/80 transition text-left"
 										>
 											<List className="h-5 w-5" />
 											My Lists
 										</button>
 										<button
-											onClick={() => handleNavigation('/settings')}
+											onClick={() => handleNavigation("/settings")}
 											className="flex w-full items-center gap-2 rounded-lg bg-white/50 px-4 py-3 font-bold tracking-wide text-gray-700 hover:bg-white/80 transition text-left"
 										>
 											<Settings className="h-5 w-5" />
@@ -217,13 +217,13 @@ export function MobileMenu({ isOpen, onToggle, links, user }: MobileMenuProps) {
 							) : (
 								<div className="border-t border-white/50 pt-6 space-y-4">
 									<button
-										onClick={() => handleNavigation('/login')}
+										onClick={() => handleNavigation("/login")}
 										className="flex items-center justify-center w-full rounded-lg bg-white/90 px-4 py-3 font-bold tracking-wide hover:bg-white/80 transition"
 									>
 										LOG IN
 									</button>
 									<button
-										onClick={() => handleNavigation('/signup')}
+										onClick={() => handleNavigation("/signup")}
 										className="flex items-center justify-center w-full rounded-lg bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 px-4 py-3 font-bold tracking-wide text-white hover:opacity-90 transition"
 									>
 										SIGN UP
