@@ -269,7 +269,7 @@ export type Database = {
           likes_count: number
           parent_tmdb_id: number | null
           rating: number | null
-          season_number: string | null
+          season_number: number | null
           tmdb_id: number
           updated_at: string
           user_id: string
@@ -284,7 +284,7 @@ export type Database = {
           likes_count?: number
           parent_tmdb_id?: number | null
           rating?: number | null
-          season_number?: string | null
+          season_number?: number | null
           tmdb_id: number
           updated_at?: string
           user_id: string
@@ -299,7 +299,7 @@ export type Database = {
           likes_count?: number
           parent_tmdb_id?: number | null
           rating?: number | null
-          season_number?: string | null
+          season_number?: number | null
           tmdb_id?: number
           updated_at?: string
           user_id?: string

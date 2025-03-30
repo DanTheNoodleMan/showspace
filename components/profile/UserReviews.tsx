@@ -16,8 +16,8 @@ interface Review {
 	parent_tmdb_id: number | null;
 	content_type: string;
 	contains_spoilers: boolean | null;
-	season_number?: number;
-	episode_number?: number;
+	season_number: number | null;
+	episode_number: number | null;
 }
 
 interface EpisodeDetails {
