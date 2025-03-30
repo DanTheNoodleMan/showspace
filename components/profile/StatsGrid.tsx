@@ -1,8 +1,8 @@
-'use client';
-import { motion } from 'framer-motion';
-import { Trophy, Users, ListChecks, Star, Tv2, PlayCircle } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+"use client";
+import { motion } from "framer-motion";
+import { Trophy, Users, ListChecks, Star, Tv2, PlayCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 interface StatsGridProps {
 	stats: {
@@ -17,41 +17,41 @@ interface StatsGridProps {
 	username: string;
 }
 
-export function StatsGrid({ stats, className = '', username }: StatsGridProps) {
+export function StatsGrid({ stats, className = "", username }: StatsGridProps) {
 	const statItems = [
 		{
 			icon: Tv2,
-			label: 'Shows Watched',
+			label: "Shows Watched",
 			value: stats.showsWatched,
 			href: "",
 		},
 		{
 			icon: PlayCircle,
-			label: 'Episodes',
+			label: "Episodes",
 			value: stats.totalEpisodes,
 			href: "",
 		},
 		{
 			icon: ListChecks,
-			label: 'Lists Created',
+			label: "Lists Created",
 			value: stats.listsCreated,
-			href: "",
+			href: "/lists",
 		},
 		{
 			icon: Users,
-			label: 'Followers',
+			label: "Followers",
 			value: stats.followers,
 			href: `/profiles/${username}/connections?tab=followers`,
 		},
 		{
 			icon: Users,
-			label: 'Following',
+			label: "Following",
 			value: stats.following,
 			href: `/profiles/${username}/connections?tab=following`,
 		},
 		{
 			icon: Star,
-			label: 'Reviews',
+			label: "Reviews",
 			value: stats.reviewsWritten,
 			href: `/profiles/${username}/reviews`,
 		},
@@ -66,7 +66,7 @@ export function StatsGrid({ stats, className = '', username }: StatsGridProps) {
 						initial={{ opacity: 0, y: 20 }}
 						animate={{ opacity: 1, y: 0 }}
 						transition={{ delay: index * 0.1 }}
-						className={`group relative ${item.href != "" ? 'cursor-pointer' : ''}`}
+						className={`group relative ${item.href != "" ? "cursor-pointer" : ""}`}
 					>
 						<div className="absolute -inset-0.5 rounded-xl bg-gradient-to-r from-pink-400 via-purple-400 to-cyan-400 opacity-75 blur transition group-hover:opacity-100" />
 						<div className="relative flex flex-col items-center h-full rounded-lg border-2 border-white/50 bg-white/90 p-4 backdrop-blur-lg">

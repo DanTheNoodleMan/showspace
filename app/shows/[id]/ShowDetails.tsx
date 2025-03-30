@@ -22,6 +22,7 @@ import { getTMDBImageUrl } from "@/config/tmdb";
 import { formatDistanceToNow } from "date-fns";
 import { ShowSkeleton } from "./ShowSkeleton";
 import { WatchStatus } from "@/components/shows/WatchStatus";
+import { QuickAddToList } from "@/components/lists/QuickAddToList";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -198,35 +199,45 @@ export function ShowDetails({ showId }: ShowDetailsProps) {
 						{/* Watch Status */}
 						<div className="mb-4">
 							<h3 className="mb-2 font-bold text-purple-600">Watch Status</h3>
-							<WatchStatus
-								showId={show.id}
-								initialStatus={show.userData?.watchStatus?.status}
-								onStatusChange={(newStatus) => {
-									// Optionally update local state if needed
-									if (show.userData) {
-										setShow((prev: any) => ({
-											...prev,
-											userData: {
-												...prev.userData,
-												watchStatus: {
-													...prev.userData?.watchStatus,
-													status: newStatus,
+							<div className="flex items-center gap-4">
+								<WatchStatus
+									showId={show.id}
+									initialStatus={show.userData?.watchStatus?.status}
+									onStatusChange={(newStatus) => {
+										// Optionally update local state if needed
+										if (show.userData) {
+											setShow((prev: any) => ({
+												...prev,
+												userData: {
+													...prev.userData,
+													watchStatus: {
+														...prev.userData?.watchStatus,
+														status: newStatus,
+													},
 												},
-											},
-										}));
-									} else {
-										// If userData doesn't exist yet, create it
-										setShow((prev: any) => ({
-											...prev,
-											userData: {
-												watchStatus: { status: newStatus },
-												review: null,
-												episodeRatings: {},
-											},
-										}));
-									}
-								}}
-							/>
+											}));
+										} else {
+											// If userData doesn't exist yet, create it
+											setShow((prev: any) => ({
+												...prev,
+												userData: {
+													watchStatus: { status: newStatus },
+													review: null,
+													episodeRatings: {},
+												},
+											}));
+										}
+									}}
+								/>
+								{/* Add QuickAddToList here */}
+								<QuickAddToList
+									showId={show.id}
+									onSuccess={() => {
+										// Optionally show a toast notification
+										// We'd need to add a toast system if not already present
+									}}
+								/>
+							</div>
 						</div>
 						{/* Watch Info */}
 						<div className="mt-auto grid grid-cols-1 gap-4 md:grid-cols-2">
