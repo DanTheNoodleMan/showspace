@@ -124,6 +124,7 @@ export type Database = {
           added_at: string
           content_type: string
           list_id: string
+          order: number | null
           parent_tmdb_id: number | null
           tmdb_id: number
         }
@@ -131,6 +132,7 @@ export type Database = {
           added_at?: string
           content_type: string
           list_id: string
+          order?: number | null
           parent_tmdb_id?: number | null
           tmdb_id: number
         }
@@ -138,6 +140,7 @@ export type Database = {
           added_at?: string
           content_type?: string
           list_id?: string
+          order?: number | null
           parent_tmdb_id?: number | null
           tmdb_id?: number
         }
@@ -436,8 +439,33 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_list_item: {
+        Args: {
+          p_list_id: string
+          p_user_id: string
+          p_tmdb_id: number
+          p_content_type: string
+        }
+        Returns: Record<string, unknown>
+      }
+      remove_list_item: {
+        Args: {
+          p_list_id: string
+          p_user_id: string
+          p_tmdb_id: number
+        }
+        Returns: undefined
+      }
       reset_missing_daily_players: {
         Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      update_list_items_order: {
+        Args: {
+          p_list_id: string
+          p_user_id: string
+          p_updates: Json
+        }
         Returns: undefined
       }
     }

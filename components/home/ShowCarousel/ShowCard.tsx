@@ -61,15 +61,6 @@ export const ShowCard = ({ show }: ShowCardProps) => {
 										</div>
 									))}
 								</div>
-								{/* Add show actions */}
-								<div className="flex items-center gap-2">
-									<QuickAddToList
-										showId={parseInt(show.id)}
-										onAdd={() => {
-											// Optional: Show mini notification
-										}}
-									/>
-								</div>
 							</div>
 						</div>
 					</div>

@@ -5,6 +5,7 @@ import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { getTMDBImageUrl } from "@/config/tmdb";
+import { useAuth } from "@/context/AuthContext";
 
 interface ListCardProps {
 	list: ListWithItems;
@@ -17,6 +18,7 @@ interface ListCardProps {
 export function ListCard({ list, isOwner, isReadOnly, onEdit, onDelete }: ListCardProps) {
 	// Take up to 4 items for the preview
 	const previewItems = list.items.slice(0, 4);
+	const { user } = useAuth();
 
 	return (
 		<motion.div
@@ -28,7 +30,10 @@ export function ListCard({ list, isOwner, isReadOnly, onEdit, onDelete }: ListCa
 			<div className="relative">
 				{/* List Header */}
 				<div className="mb-4 flex items-center justify-between">
-					<Link href={`/lists/${list.id}`} className="flex items-center gap-2 hover:text-purple-600 transition-colors">
+					<Link
+						href={`/profiles/${user?.user_metadata.username}/lists/${list.id}`}
+						className="flex items-center gap-2 hover:text-purple-600 transition-colors"
+					>
 						<h3 className="text-xl font-bold">{list.title}</h3>
 						{list.is_private && <Lock className="h-4 w-4 text-gray-500" />}
 					</Link>
@@ -52,16 +57,22 @@ export function ListCard({ list, isOwner, isReadOnly, onEdit, onDelete }: ListCa
 				</div>
 
 				{/* List Stats */}
-				<div className="mb-4 flex items-center gap-4 text-sm text-gray-600">
+				<div className="mb-4 flex items-center gap-6 text-sm text-gray-600">
 					<div className="flex items-center gap-1">
 						<Grid className="h-4 w-4" />
-						<span>{list.itemCount} items</span>
+						<span className="flex flex-row gap-1">
+							{list.itemCount}
+							<span className="hidden md:block">items</span>
+						</span>
 					</div>
 					<div className="flex items-center gap-1">
 						<Eye className="h-4 w-4" />
 						<span>{list.is_private ? "Private" : "Public"}</span>
 					</div>
-					<div>Updated {formatDistanceToNow(new Date(list.updated_at), { addSuffix: true })}</div>
+					<div className="flex items-center gap-1">
+						<span className="hidden md:block">Updated</span>{" "}
+						{formatDistanceToNow(new Date(list.updated_at), { addSuffix: true })}
+					</div>
 				</div>
 
 				{/* List Description */}

@@ -57,7 +57,7 @@ export function ListCreationModal({ isOpen, onClose, onSubmit, initialData, mode
 						className="relative z-10 w-full max-w-lg rounded-xl border-4 border-white/50 bg-white/90 p-6 shadow-xl backdrop-blur-lg"
 					>
 						{/* Close Button */}
-						<button onClick={onClose} className="absolute right-4 top-4 rounded-full p-2 text-gray-500 hover:bg-gray-100">
+						<button onClick={onClose} className="absolute right-4 top-4 rounded-full p-2 text-gray-500 hover:bg-gray-100 cursor-pointer">
 							<X className="h-5 w-5" />
 						</button>
 
@@ -105,7 +105,7 @@ export function ListCreationModal({ isOpen, onClose, onSubmit, initialData, mode
 										className={`flex items-center gap-2 rounded-lg px-4 py-2 transition ${
 											!formData.isPrivate
 												? "bg-purple-500 text-white"
-												: "border-2 border-purple-200 text-gray-600 hover:bg-purple-50"
+												: "border-2 border-purple-200 text-gray-600 hover:bg-purple-50 cursor-pointer"
 										}`}
 									>
 										<Globe className="h-4 w-4" />
@@ -117,7 +117,7 @@ export function ListCreationModal({ isOpen, onClose, onSubmit, initialData, mode
 										className={`flex items-center gap-2 rounded-lg px-4 py-2 transition ${
 											formData.isPrivate
 												? "bg-purple-500 text-white"
-												: "border-2 border-purple-200 text-gray-600 hover:bg-purple-50"
+												: "border-2 border-purple-200 text-gray-600 hover:bg-purple-50 cursor-pointer"
 										}`}
 									>
 										<Lock className="h-4 w-4" />
@@ -134,14 +134,14 @@ export function ListCreationModal({ isOpen, onClose, onSubmit, initialData, mode
 								<button
 									type="button"
 									onClick={onClose}
-									className="rounded-lg border-2 border-purple-200 px-6 py-2 font-bold text-purple-600 hover:bg-purple-50"
+									className="rounded-lg border-2 border-purple-200 px-6 py-2 font-bold text-purple-600 hover:bg-purple-50 cursor-pointer"
 								>
 									Cancel
 								</button>
 								<button
 									type="submit"
 									disabled={isSubmitting}
-									className="flex items-center gap-2 rounded-lg bg-purple-500 px-6 py-2 font-bold text-white hover:bg-purple-600 disabled:opacity-50"
+									className="flex items-center gap-2 rounded-lg bg-purple-500 px-6 py-2 font-bold text-white hover:bg-purple-600 disabled:opacity-50 cursor-pointer"
 								>
 									{isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
 									{mode === "create" ? "Create List" : "Save Changes"}

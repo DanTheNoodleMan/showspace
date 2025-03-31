@@ -116,21 +116,14 @@ export default async function ProfileListsPage({ params }: ProfileListsPageProps
 			</div>
 			<div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 				{/* Header with back button */}
-				<div className="mb-8 flex items-center gap-4">
-					<Link href={`/profiles/${resolvedParams.username}`} className="rounded-full bg-white/90 p-2 transition hover:bg-white">
-						<ArrowLeft className="h-6 w-6 text-gray-600" />
-					</Link>
-					<h1 className="text-2xl font-black tracking-wider">
+
+				<div className="flex items-center gap-4 mb-8">
+					<h1
+						className="bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 bg-clip-text text-2xl md:text-3xl font-black tracking-wider text-transparent"
+						style={{ textShadow: "4px 4px 8px rgba(255,255,255,0.5)" }}
+					>
 						{data.isOwnProfile ? "Your lists" : `${resolvedParams.username}'s lists`}
 					</h1>
-					{data.isOwnProfile && (
-						<Link
-							href={`/profiles/${resolvedParams.username}/lists`}
-							className="ml-auto rounded-lg bg-purple-500 px-4 py-2 font-bold text-white hover:bg-purple-600"
-						>
-							Manage Lists
-						</Link>
-					)}
 				</div>
 
 				<ListsContent initialLists={data.lists} isReadOnly={!data.isOwnProfile} profile={data.profile} />

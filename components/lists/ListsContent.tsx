@@ -14,9 +14,10 @@ interface ListsContentProps {
 		display_name: string | null;
 	};
 	isReadOnly?: boolean;
+	showViewMode?: boolean;
 }
 
-export function ListsContent({ initialLists, profile, isReadOnly = false }: ListsContentProps) {
+export function ListsContent({ initialLists, profile, isReadOnly = false, showViewMode = false }: ListsContentProps) {
 	const [lists, setLists] = useState(initialLists);
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
@@ -93,27 +94,67 @@ export function ListsContent({ initialLists, profile, isReadOnly = false }: List
 	return (
 		<div className="space-y-6">
 			{/* View Controls */}
-			<div className="flex items-center justify-end gap-4">
-				<div className="rounded-lg border-2 border-purple-300 bg-white/50 p-1">
-					<div className="flex gap-1">
-						<button
-							onClick={() => setViewMode("grid")}
-							className={`rounded-md p-2 transition cursor-pointer ${
-								viewMode === "grid" ? "bg-purple-500 text-white" : "text-purple-600 hover:bg-purple-100"
-							}`}
-						>
-							<Grid className="h-5 w-5" />
-						</button>
-						<button
-							onClick={() => setViewMode("list")}
-							className={`rounded-md p-2 transition cursor-pointer ${
-								viewMode === "list" ? "bg-purple-500 text-white" : "text-purple-600 hover:bg-purple-100"
-							}`}
-						>
-							<ListIcon className="h-5 w-5" />
-						</button>
+			{showViewMode && (
+				<div className="flex items-center justify-end gap-4">
+					<div className="rounded-lg border-2 border-purple-300 bg-white/50 p-1">
+						<div className="flex gap-1">
+							<button
+								onClick={() => setViewMode("grid")}
+								className={`rounded-md p-2 transition cursor-pointer ${
+									viewMode === "grid" ? "bg-purple-500 text-white" : "text-purple-600 hover:bg-purple-100"
+								}`}
+							>
+								<Grid className="h-5 w-5" />
+							</button>
+							<button
+								onClick={() => setViewMode("list")}
+								className={`rounded-md p-2 transition cursor-pointer ${
+									viewMode === "list" ? "bg-purple-500 text-white" : "text-purple-600 hover:bg-purple-100"
+								}`}
+							>
+								<ListIcon className="h-5 w-5" />
+							</button>
+						</div>
 					</div>
 				</div>
+			)}
+
+			{/* Header Controls */}
+			<div className="flex items-center justify-between gap-4">
+				{!isReadOnly && (
+					<button
+						onClick={() => setIsCreateModalOpen(true)}
+						className="group relative overflow-hidden rounded-lg bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 p-0.5 focus:outline-none cursor-pointer"
+					>
+						<div className="relative flex items-center gap-2 rounded-md bg-white px-4 py-2 text-center font-bold tracking-wide text-gray-900 transition group-hover:bg-transparent group-hover:text-white">
+							<Plus className="h-5 w-5" />
+							Create New List
+						</div>
+					</button>
+				)}
+
+				{showViewMode && (
+					<div className={`rounded-lg border-2 border-purple-300 bg-white/50 p-1 ${!isReadOnly ? "ml-auto" : ""}`}>
+						<div className="flex gap-1">
+							<button
+								onClick={() => setViewMode("grid")}
+								className={`rounded-md p-2 transition cursor-pointer ${
+									viewMode === "grid" ? "bg-purple-500 text-white" : "text-purple-600 hover:bg-purple-100"
+								}`}
+							>
+								<Grid className="h-5 w-5" />
+							</button>
+							<button
+								onClick={() => setViewMode("list")}
+								className={`rounded-md p-2 transition cursor-pointer ${
+									viewMode === "list" ? "bg-purple-500 text-white" : "text-purple-600 hover:bg-purple-100"
+								}`}
+							>
+								<ListIcon className="h-5 w-5" />
+							</button>
+						</div>
+					</div>
+				)}
 			</div>
 
 			{/* Lists Grid */}
