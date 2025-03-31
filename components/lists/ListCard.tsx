@@ -17,7 +17,7 @@ interface ListCardProps {
 
 export function ListCard({ list, isOwner, isReadOnly, onEdit, onDelete }: ListCardProps) {
 	// Take up to 4 items for the preview
-	const previewItems = list.items.slice(0, 4);
+	const previewItems = list.items;
 	const { user } = useAuth();
 
 	return (
@@ -81,21 +81,24 @@ export function ListCard({ list, isOwner, isReadOnly, onEdit, onDelete }: ListCa
 				{/* Preview Grid */}
 				{previewItems.length > 0 && (
 					<div className="grid grid-cols-4 gap-2">
-						{previewItems.map((item) => (
-							<div key={item.tmdb_id} className="aspect-[2/3] overflow-hidden rounded-lg">
-								{item.show?.poster_path ? (
-									<img
-										src={getTMDBImageUrl(item.show.poster_path, "poster", "small")!}
-										alt={item.show.name}
-										className="h-full w-full object-cover transition-transform group-hover:scale-105"
-									/>
-								) : (
-									<div className="flex h-full w-full items-center justify-center bg-purple-100">
-										<Grid className="h-6 w-6 text-purple-400" />
-									</div>
-								)}
-							</div>
-						))}
+						{[...previewItems]
+							.sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+							.slice(0, 4)
+							.map((item) => (
+								<div key={item.tmdb_id} className="aspect-[2/3] overflow-hidden rounded-lg">
+									{item.show?.poster_path ? (
+										<img
+											src={getTMDBImageUrl(item.show.poster_path, "poster", "small")!}
+											alt={item.show.name}
+											className="h-full w-full object-cover transition-transform group-hover:scale-105"
+										/>
+									) : (
+										<div className="flex h-full w-full items-center justify-center bg-purple-100">
+											<Grid className="h-6 w-6 text-purple-400" />
+										</div>
+									)}
+								</div>
+							))}
 					</div>
 				)}
 			</div>

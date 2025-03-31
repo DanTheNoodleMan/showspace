@@ -95,8 +95,8 @@ export function QuickAddToList({ showId, onAdd, onSuccess }: QuickAddToListProps
 							added_at: new Date().toISOString(),
 							list_id: listId,
 							parent_tmdb_id: null, // Required by the type
-							// Include any required fields from EnhancedListItem
-							show: undefined, // We don't have show details yet, will be populated on next fetch
+							show: undefined,
+							order: null
 						};
 						return {
 							...list,

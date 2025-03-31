@@ -24,6 +24,8 @@ export function ListsContent({ initialLists, profile, isReadOnly = false, showVi
 	const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 	const [editingList, setEditingList] = useState<ListWithItems | null>(null);
 
+	console.log("Lists:", lists);
+
 	const handleCreateList = async (data: any) => {
 		try {
 			const response = await fetch("/api/lists", {
@@ -40,6 +42,7 @@ export function ListsContent({ initialLists, profile, isReadOnly = false, showVi
 
 			const { list } = await response.json();
 			setLists((prev) => [{ ...list, items: [], itemCount: 0 }, ...prev]);
+			console.log("List created:", list);
 		} catch (error) {
 			console.error("Error creating list:", error);
 			throw error;
