@@ -1,27 +1,31 @@
 import { createClient } from "@/lib/supabase/server";
 import { GridBackground } from "@/components/shared/GridBackground";
-import { redirect } from "next/navigation";
+import { redirect, notFound } from "next/navigation";
 import { ListsContent } from "@/components/lists/ListsContent";
 import { tmdbService } from "@/services/tmdb";
 import { ListWithItems, EnhancedListItem } from "@/types/lists";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import { getUserProfile } from "@/lib/utils/username";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+interface ProfileListsPageProps {
+	params: Promise<{ username: string }>;
+}
 
-async function getListsData() {
+async function getProfileListsData(username: string) {
 	const supabase = await createClient();
+	const profile = await getUserProfile(supabase, username);
 
+	if (!profile) return notFound();
+
+	// Get current viewer's ID to check if viewing own profile
 	const {
 		data: { user },
-		error: authError,
 	} = await supabase.auth.getUser();
+	const isOwnProfile = user?.id === profile.id;
 
-	if (authError || !user) {
-		redirect("/login?redirectTo=/lists");
-	}
-
-	// Fetch all lists for the user with their items
-	const { data: lists, error: listsError } = await supabase
+	// Fetch all public lists for the user (and private if own profile)
+	const listQuery = supabase
 		.from("lists")
 		.select(
 			`
@@ -29,8 +33,15 @@ async function getListsData() {
       items:list_items (*)
     `
 		)
-		.eq("user_id", user.id)
+		.eq("user_id", profile.id)
 		.order("updated_at", { ascending: false });
+
+	// Only show private lists if viewing own profile
+	if (!isOwnProfile) {
+		listQuery.eq("is_private", false);
+	}
+
+	const { data: lists, error: listsError } = await listQuery;
 
 	if (listsError) {
 		console.error("Error fetching lists:", listsError);
@@ -39,15 +50,15 @@ async function getListsData() {
 
 	if (!lists) {
 		return {
+			profile,
 			lists: [] as ListWithItems[],
-			user,
+			isOwnProfile,
 		};
 	}
 
 	// For each list, fetch show details for all items
 	const listsWithShowDetails: ListWithItems[] = await Promise.all(
 		lists.map(async (list) => {
-			// Handle lists with no items
 			if (!list.items) {
 				return {
 					...list,
@@ -88,13 +99,15 @@ async function getListsData() {
 	);
 
 	return {
+		profile,
 		lists: listsWithShowDetails,
-		user,
+		isOwnProfile,
 	};
 }
 
-export default async function ListsPage() {
-	const data = await getListsData();
+export default async function ProfileListsPage({ params }: ProfileListsPageProps) {
+	const resolvedParams = await params;
+	const data = await getProfileListsData(resolvedParams.username);
 
 	return (
 		<div className="min-h-screen bg-gradient-to-b from-pink-100 via-purple-100 to-cyan-100 pt-8">
@@ -102,7 +115,25 @@ export default async function ListsPage() {
 				<GridBackground />
 			</div>
 			<div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-				<ListsContent initialLists={data.lists} user={data.user} />
+				{/* Header with back button */}
+				<div className="mb-8 flex items-center gap-4">
+					<Link href={`/profiles/${resolvedParams.username}`} className="rounded-full bg-white/90 p-2 transition hover:bg-white">
+						<ArrowLeft className="h-6 w-6 text-gray-600" />
+					</Link>
+					<h1 className="text-2xl font-black tracking-wider">
+						{data.isOwnProfile ? "Your lists" : `${resolvedParams.username}'s lists`}
+					</h1>
+					{data.isOwnProfile && (
+						<Link
+							href={`/profiles/${resolvedParams.username}/lists`}
+							className="ml-auto rounded-lg bg-purple-500 px-4 py-2 font-bold text-white hover:bg-purple-600"
+						>
+							Manage Lists
+						</Link>
+					)}
+				</div>
+
+				<ListsContent initialLists={data.lists} isReadOnly={!data.isOwnProfile} profile={data.profile} />
 			</div>
 		</div>
 	);

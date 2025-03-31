@@ -8,7 +8,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { MobileMenuProps } from "@/types/navbar";
 import { UserSearch } from "@/components/shared/UserSearch";
 
-const PATHS_WITH_LOADING_OVERLAY = ["/profile", "/lists", "/settings", "/login", "/signup", "/daily-trailer,", "/"];
+const PATHS_WITH_LOADING_OVERLAY = ["/profile", "/settings", "/login", "/signup", "/daily-trailer,", "/"];
 
 // Safety timeout to prevent infinite loading state (in milliseconds)
 const LOADING_TIMEOUT = 3000;
@@ -192,7 +192,7 @@ export function MobileMenu({ isOpen, onToggle, links, user }: MobileMenuProps) {
 											Profile
 										</button>
 										<button
-											onClick={() => handleNavigation("/lists")}
+											onClick={() => handleNavigation(`/profiles/${user.user_metadata.username}/lists`)}
 											className="flex w-full items-center gap-2 rounded-lg bg-white/50 px-4 py-3 font-bold tracking-wide text-gray-700 hover:bg-white/80 transition text-left"
 										>
 											<List className="h-5 w-5" />

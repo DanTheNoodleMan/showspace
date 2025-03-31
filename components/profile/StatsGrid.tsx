@@ -35,7 +35,7 @@ export function StatsGrid({ stats, className = "", username }: StatsGridProps) {
 			icon: ListChecks,
 			label: "Lists Created",
 			value: stats.listsCreated,
-			href: "/lists",
+			href: `/profiles/${username}/lists`,
 		},
 		{
 			icon: Users,

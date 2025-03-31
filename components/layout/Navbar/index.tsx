@@ -1,31 +1,31 @@
 // src/components/layout/Navbar/index.tsx
-'use client';
-import React, { useState, useEffect } from 'react';
-import { NavLink } from './NavLink';
-import { MobileMenu } from './MobileMenu';
-import { UserButton } from './UserButton';
-import { usePathname } from 'next/navigation';
-import { NavLink as NavLinkType } from '@/types/navbar';
-import Link from 'next/link';
-import { useAuth } from '@/context/AuthContext';
-import { UserSearch } from '@/components/shared/UserSearch';
-
-const NAV_LINKS = {
-	public: [
-		{ href: '/', label: 'HOME' },
-		{ href: '/daily-trailer', label: 'DAILY GAME' },
-	],
-	authenticated: [
-		{ href: '/', label: 'HOME' },
-		{ href: '/daily-trailer', label: 'DAILY GAME' },
-		{ href: '/lists', label: 'MY LISTS' },
-	],
-} as const;
+"use client";
+import React, { useState, useEffect } from "react";
+import { NavLink } from "./NavLink";
+import { MobileMenu } from "./MobileMenu";
+import { UserButton } from "./UserButton";
+import { usePathname } from "next/navigation";
+import { NavLink as NavLinkType } from "@/types/navbar";
+import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
+import { UserSearch } from "@/components/shared/UserSearch";
 
 export function Navbar() {
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 	const pathname = usePathname();
 	const { user, isLoading } = useAuth();
+
+	const NAV_LINKS = {
+		public: [
+			{ href: "/", label: "HOME" },
+			{ href: "/daily-trailer", label: "DAILY GAME" },
+		],
+		authenticated: [
+			{ href: "/", label: "HOME" },
+			{ href: "/daily-trailer", label: "DAILY GAME" },
+			{ href: `/profiles/${user?.user_metadata.username}/lists`, label: "MY LISTS" },
+		],
+	} as const;
 
 	// Create a mutable copy of the links array based on auth state
 	const links: NavLinkType[] = [...(user ? NAV_LINKS.authenticated : NAV_LINKS.public)];
@@ -40,7 +40,7 @@ export function Navbar() {
 			<nav className="relative mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
 				{/* Logo */}
 				<div className="flex items-center gap-2">
-					<Link href={'/'}>
+					<Link href={"/"}>
 						<span className="bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 bg-clip-text text-lg md:text-3xl font-black uppercase tracking-wider text-transparent">
 							SHOWSPACE
 						</span>

@@ -52,7 +52,7 @@ export function UserButton({ user }: UserButtonProps) {
 						Profile
 					</Link>
 					<Link
-						href="/lists"
+						href={`/profiles/${user.user_metadata.username}/lists`}
 						className="flex w-full items-center gap-2 rounded-lg px-4 py-2 text-left font-bold tracking-wide text-gray-700 transition hover:bg-purple-100"
 					>
 						<List className="h-5 w-5" />

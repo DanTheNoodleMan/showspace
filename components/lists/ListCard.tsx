@@ -9,11 +9,12 @@ import { getTMDBImageUrl } from "@/config/tmdb";
 interface ListCardProps {
 	list: ListWithItems;
 	isOwner: boolean;
+	isReadOnly?: boolean;
 	onEdit?: () => void;
 	onDelete?: () => void;
 }
 
-export function ListCard({ list, isOwner, onEdit, onDelete }: ListCardProps) {
+export function ListCard({ list, isOwner, isReadOnly, onEdit, onDelete }: ListCardProps) {
 	// Take up to 4 items for the preview
 	const previewItems = list.items.slice(0, 4);
 

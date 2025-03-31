@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { GridBackground } from "@/components/shared/GridBackground";
 import { UserReviews } from "@/components/profile/UserReviews";
 import { notFound } from "next/navigation";
+import { getUserProfile } from "@/lib/utils/username";
 
 interface ReviewsPageProps {
 	params: Promise<{ username: string }>;
@@ -10,10 +11,7 @@ interface ReviewsPageProps {
 
 async function getReviewsData(username: string) {
 	const supabase = await createClient();
-	const formattedUsername = username.toLowerCase();
-
-	// Get user profile
-	const { data: profile } = await supabase.from("profiles").select("*").eq("username", formattedUsername).single();
+	const profile = await getUserProfile(supabase, username);
 	if (!profile) return notFound();
 
 	// Get user's reviews with show details

@@ -1,14 +1,15 @@
-import { createClient } from '@/lib/supabase/server';
-import { ProfileHeader } from '@/components/profile/ProfileHeader';
-import { StatsGrid } from '@/components/profile/StatsGrid';
-import { ActivityFeed } from '@/components/profile/ActivityFeed';
-import { GridBackground } from '@/components/shared/GridBackground';
-import { headers } from 'next/headers';
-import { Suspense } from 'react';
-import { ProfileSkeleton } from '@/components/profile/ProfileSkeleton';
-import { notFound, redirect } from 'next/navigation';
+import { createClient } from "@/lib/supabase/server";
+import { ProfileHeader } from "@/components/profile/ProfileHeader";
+import { StatsGrid } from "@/components/profile/StatsGrid";
+import { ActivityFeed } from "@/components/profile/ActivityFeed";
+import { GridBackground } from "@/components/shared/GridBackground";
+import { headers } from "next/headers";
+import { Suspense } from "react";
+import { ProfileSkeleton } from "@/components/profile/ProfileSkeleton";
+import { notFound, redirect } from "next/navigation";
+import { getUserProfile } from "@/lib/utils/username";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 interface ProfilePageProps {
@@ -17,14 +18,9 @@ interface ProfilePageProps {
 
 async function getProfileData(username: string) {
 	const supabase = await createClient();
-	const formattedUsername = username.toLowerCase();
+	const profile = await getUserProfile(supabase, username);
 
-	// First get the profile by username
-	const { data: profile, error: profileError } = await supabase.from('profiles').select('*').eq('username', formattedUsername).single();
-
-	if (profileError || !profile) {
-		redirect('/');
-	}
+	if (!profile) redirect("/");
 
 	// Get current viewer's ID to check if following
 	const {
@@ -41,14 +37,14 @@ async function getProfileData(username: string) {
 		{ data: watchHistory },
 		{ data: isFollowing },
 	] = await Promise.all([
-		supabase.from('user_stats').select('*').eq('user_id', profile.id).single(),
-		supabase.from('reviews').select('*', { count: 'exact' }).eq('user_id', profile.id),
-		supabase.from('lists').select('*', { count: 'exact' }).eq('user_id', profile.id).eq('is_private', false),
-		supabase.from('followers').select('*', { count: 'exact' }).eq('following_id', profile.id),
-		supabase.from('followers').select('*', { count: 'exact' }).eq('follower_id', profile.id),
-		supabase.from('watch_history').select('*', { count: 'exact' }).eq('user_id', profile.id),
+		supabase.from("user_stats").select("*").eq("user_id", profile.id).single(),
+		supabase.from("reviews").select("*", { count: "exact" }).eq("user_id", profile.id),
+		supabase.from("lists").select("*", { count: "exact" }).eq("user_id", profile.id).eq("is_private", false),
+		supabase.from("followers").select("*", { count: "exact" }).eq("following_id", profile.id),
+		supabase.from("followers").select("*", { count: "exact" }).eq("follower_id", profile.id),
+		supabase.from("watch_history").select("*", { count: "exact" }).eq("user_id", profile.id),
 		currentUser
-			? supabase.from('followers').select('*').eq('follower_id', currentUser.id).eq('following_id', profile.id).single()
+			? supabase.from("followers").select("*").eq("follower_id", currentUser.id).eq("following_id", profile.id).single()
 			: Promise.resolve({ data: null }),
 	]);
 
@@ -67,13 +63,13 @@ async function getProfileData(username: string) {
 
 	// Get recent activity
 	const [{ data: recentWatchHistory }, { data: recentReviews }] = await Promise.all([
-		supabase.from('watch_history').select('*').eq('user_id', profile.id).order('watched_at', { ascending: false }).limit(10),
+		supabase.from("watch_history").select("*").eq("user_id", profile.id).order("watched_at", { ascending: false }).limit(10),
 		supabase
-			.from('reviews')
-			.select('*')
-			.eq('user_id', profile.id)
-			.eq('content_type', 'show')
-			.order('created_at', { ascending: false })
+			.from("reviews")
+			.select("*")
+			.eq("user_id", profile.id)
+			.eq("content_type", "show")
+			.order("created_at", { ascending: false })
 			.limit(10),
 	]);
 
@@ -81,13 +77,13 @@ async function getProfileData(username: string) {
 	const activities = [
 		...(recentWatchHistory?.map((activity) => ({
 			id: activity.id,
-			type: 'WATCHED' as const,
+			type: "WATCHED" as const,
 			show: activity.show_tmdb_id.toString(),
 			timestamp: new Date(activity.watched_at),
 		})) ?? []),
 		...(recentReviews?.map((review) => ({
 			id: review.id,
-			type: 'REVIEWED' as const,
+			type: "REVIEWED" as const,
 			show: review.tmdb_id.toString(),
 			timestamp: new Date(review.created_at),
 			rating: review.rating,
