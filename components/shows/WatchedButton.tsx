@@ -10,9 +10,23 @@ interface WatchedButtonProps {
 	episodeId: number;
 	initialWatched?: boolean;
 	onWatchedChange?: (watched: boolean) => void;
+	posterPath: string;
+	episodeNumber: number;
+	seasonNumber: number;
+	showName: string;
 }
 
-export default function WatchedButton({ showId, seasonId, episodeId, initialWatched = false, onWatchedChange }: WatchedButtonProps) {
+export default function WatchedButton({
+	showId,
+	seasonId,
+	episodeId,
+	initialWatched = false,
+	onWatchedChange,
+	posterPath,
+	episodeNumber,
+	seasonNumber,
+	showName,
+}: WatchedButtonProps) {
 	const [isWatched, setIsWatched] = useState(initialWatched);
 	const [isLoading, setIsLoading] = useState(false);
 	const { user } = useAuth();
@@ -47,6 +61,10 @@ export default function WatchedButton({ showId, seasonId, episodeId, initialWatc
 					show_tmdb_id: showId,
 					season_tmdb_id: seasonId,
 					tmdb_id: episodeId,
+					poster_path: posterPath,
+					episode_number: episodeNumber,
+					season_number: seasonNumber,
+					show_name: showName,
 					watched_at: new Date().toISOString(),
 				});
 

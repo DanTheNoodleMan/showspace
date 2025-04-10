@@ -62,32 +62,85 @@ async function getProfileData(username: string) {
 	};
 
 	// Get recent activity
-	const [{ data: recentWatchHistory }, { data: recentReviews }] = await Promise.all([
-		supabase.from("watch_history").select("*").eq("user_id", profile.id).order("watched_at", { ascending: false }).limit(10),
+	const [{ data: recentWatchHistory }, { data: recentReviews }, { data: recentLists }] = await Promise.all([
+		supabase
+			.from("watch_history")
+			.select(
+				`
+			id,
+			show_tmdb_id,
+			show_name,
+			watched_at,
+			season_number,
+			episode_number,
+			poster_path
+		  `
+			)
+			.eq("user_id", profile.id)
+			.order("watched_at", { ascending: false })
+			.limit(10),
+
 		supabase
 			.from("reviews")
-			.select("*")
+			.select(
+				`
+			id,
+			tmdb_id,
+			content,
+			rating,
+			created_at,
+			show_name,
+			content_type
+		  `
+			)
 			.eq("user_id", profile.id)
 			.eq("content_type", "show")
+			.order("created_at", { ascending: false })
+			.limit(10),
+
+		supabase
+			.from("lists")
+			.select(
+				`
+			id,
+			title,
+			created_at,
+			items:list_items(count)
+		  `
+			)
+			.eq("user_id", profile.id)
 			.order("created_at", { ascending: false })
 			.limit(10),
 	]);
 
 	// Combine and sort activities
+	// In your profile page or wherever you fetch activities
 	const activities = [
 		...(recentWatchHistory?.map((activity) => ({
 			id: activity.id,
 			type: "WATCHED" as const,
 			show: activity.show_tmdb_id.toString(),
+			show_name: activity.show_name,
 			timestamp: new Date(activity.watched_at),
+			season_number: activity.season_number,
+			episode_number: activity.episode_number,
+			poster_path: activity.poster_path,
 		})) ?? []),
 		...(recentReviews?.map((review) => ({
 			id: review.id,
 			type: "REVIEWED" as const,
 			show: review.tmdb_id.toString(),
+			show_name: review.show_name,
 			timestamp: new Date(review.created_at),
 			rating: review.rating,
 			content: review.content,
+		})) ?? []),
+		...(recentLists?.map((list) => ({
+			id: list.id,
+			type: "CREATED_LIST" as const,
+			timestamp: new Date(list.created_at),
+			title: list.title,
+			showCount: list.items?.length ?? 0,
 		})) ?? []),
 	]
 		.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
@@ -124,7 +177,7 @@ async function ProfileContent({ username }: { username: string }) {
 	return (
 		<>
 			<ProfileHeader profile={profile} stats={stats} isOwnProfile={isOwnProfile} isFollowing={isFollowing} />
-			<div className="mt-8 grid gap-8 lg:grid-cols-3">
+			<div className="mt-8 grid gap-8 lg:grid-cols-3 items-start">
 				<StatsGrid stats={stats} className="lg:col-span-1" username={username} />
 				<ActivityFeed activities={activities} className="lg:col-span-2" />
 			</div>

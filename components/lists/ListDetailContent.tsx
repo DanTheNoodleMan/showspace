@@ -23,7 +23,6 @@ export function ListDetailContent({ list: initialList, isOwner, username }: List
 	const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 	const [isSearchOpen, setIsSearchOpen] = useState(false);
 	const { showToast } = useToast();
-	const router = useRouter();
 
 	const handleEditList = async (data: any) => {
 		try {

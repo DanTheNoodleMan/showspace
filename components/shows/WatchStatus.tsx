@@ -120,7 +120,7 @@ export function WatchStatus({ showId, initialStatus, onStatusChange }: WatchStat
 
 	// Authentication status buttons
 	return (
-		<div className="flex flex-wrap gap-2">
+		<div className="flex flex-wrap md:flex-nowrap w-full gap-2">
 			{isLoading ? (
 				<div className="flex w-full items-center justify-center py-2">
 					<Loader2 className="h-5 w-5 animate-spin text-purple-500" />
@@ -132,7 +132,7 @@ export function WatchStatus({ showId, initialStatus, onStatusChange }: WatchStat
 						<button
 							key={option.value}
 							onClick={() => handleStatusChange(option.value)}
-							className={`rounded-lg px-4 py-2 font-bold transition cursor-pointer ${
+							className={`rounded-lg px-4 py-2 font-bold transition cursor-pointer w-full ${
 								status === option.value
 									? "bg-purple-500 text-white"
 									: "border-2 border-purple-300 bg-white/50 text-purple-600 hover:bg-purple-100"

@@ -273,6 +273,7 @@ export type Database = {
           parent_tmdb_id: number | null
           rating: number | null
           season_number: number | null
+          show_name: string | null
           tmdb_id: number
           updated_at: string
           user_id: string
@@ -288,6 +289,7 @@ export type Database = {
           parent_tmdb_id?: number | null
           rating?: number | null
           season_number?: number | null
+          show_name?: string | null
           tmdb_id: number
           updated_at?: string
           user_id: string
@@ -303,6 +305,7 @@ export type Database = {
           parent_tmdb_id?: number | null
           rating?: number | null
           season_number?: number | null
+          show_name?: string | null
           tmdb_id?: number
           updated_at?: string
           user_id?: string
@@ -356,8 +359,10 @@ export type Database = {
         Row: {
           episode_number: number | null
           id: string
+          poster_path: string | null
           season_number: number | null
           season_tmdb_id: number
+          show_name: string | null
           show_tmdb_id: number
           tmdb_id: number
           user_id: string
@@ -366,8 +371,10 @@ export type Database = {
         Insert: {
           episode_number?: number | null
           id?: string
+          poster_path?: string | null
           season_number?: number | null
           season_tmdb_id: number
+          show_name?: string | null
           show_tmdb_id: number
           tmdb_id: number
           user_id: string
@@ -376,8 +383,10 @@ export type Database = {
         Update: {
           episode_number?: number | null
           id?: string
+          poster_path?: string | null
           season_number?: number | null
           season_tmdb_id?: number
+          show_name?: string | null
           show_tmdb_id?: number
           tmdb_id?: number
           user_id?: string
@@ -466,6 +475,10 @@ export type Database = {
           p_user_id: string
           p_updates: Json
         }
+        Returns: undefined
+      }
+      update_watch_history_show_names: {
+        Args: Record<PropertyKey, never>
         Returns: undefined
       }
     }

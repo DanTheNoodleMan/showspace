@@ -2,34 +2,19 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-	Star,
-	ChevronDown,
-	ChevronUp,
-	Eye,
-	EyeOff,
-	Clock,
-	Calendar,
-	TrendingUp,
-	Award,
-	Tv2,
-	Users,
-	Globe,
-	Play,
-	ExternalLink,
-} from "lucide-react";
+import { Star, ChevronDown, Eye, EyeOff, Clock, Calendar, TrendingUp, Tv2, Users, Globe, Play, ExternalLink } from "lucide-react";
 import { getTMDBImageUrl } from "@/config/tmdb";
 import { formatDistanceToNow } from "date-fns";
 import { ShowSkeleton } from "./ShowSkeleton";
 import { WatchStatus } from "@/components/shows/WatchStatus";
 import { QuickAddToList } from "@/components/lists/QuickAddToList";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import EpisodeRating from "@/components/shows/EpisodeRating";
 import { EpisodeReviews } from "@/components/shows/EpisodeReviews";
 import SeasonRatingSummary from "@/components/shows/SeasonRatingSummary";
 import WatchedButton from "@/components/shows/WatchedButton";
+import { useToast } from "@/components/ui/toast";
 
 interface ShowDetailsProps {
 	showId: string;
@@ -56,7 +41,7 @@ export function ShowDetails({ showId }: ShowDetailsProps) {
 	const [error, setError] = useState<string | null>(null);
 	const [expandedSeasons, setExpandedSeasons] = useState<Record<number, boolean>>({});
 	const [showSpoilers, setShowSpoilers] = useState(true);
-	const router = useRouter();
+	const { showToast } = useToast();
 
 	useEffect(() => {
 		async function fetchShow() {
@@ -85,6 +70,8 @@ export function ShowDetails({ showId }: ShowDetailsProps) {
 	if (error) return <div>Error: {error}</div>;
 	if (!show) return null;
 
+	console.log("Show data: ", show);
+
 	return (
 		<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 			{/* Show Header */}
@@ -102,19 +89,36 @@ export function ShowDetails({ showId }: ShowDetailsProps) {
 							/>
 						</div>
 
-						{/* Quick Stats Cards */}
-						<div className="grid grid-cols-2 gap-2 w-full">
-							<div className="rounded-lg border-2 border-purple-300 bg-white/50 p-3 text-center">
-								<TrendingUp className="mx-auto h-5 w-5 text-purple-500" />
-								<div className="mt-1 text-sm font-bold text-purple-600">{show.popularity.toFixed(1)}</div>
-								<div className="text-xs text-gray-600">Popularity</div>
+						{/* Watch Info */}
+						<div className="flex justify-between gap-1 w-full">
+							{/* Binge Time */}
+							<div className="rounded-lg border-2 border-purple-300 bg-white/50 p-4 text-center">
+								<h3 className="mb-2 font-bold text-purple-600">Binge Time</h3>
+								<div className="flex items-center gap-2">
+									<Clock className="h-5 w-5 text-purple-500" />
+									<span className="font-mono">
+										{calculateBingeTime(show.seasons.flatMap((s: any) => s.episodes || []))}
+									</span>
+								</div>
 							</div>
-							<div className="rounded-lg border-2 border-purple-300 bg-white/50 p-3 text-center">
-								<Users className="mx-auto h-5 w-5 text-purple-500" />
-								<div className="mt-1 text-sm font-bold text-purple-600">{show.vote_count.toLocaleString()}</div>
-								<div className="text-xs text-gray-600">Votes</div>
+
+							{/* Episode Count */}
+							<div className="rounded-lg border-2 border-purple-300 bg-white/50 p-4">
+								<h3 className="mb-2 font-bold text-purple-600">Episodes</h3>
+								<div className="flex items-center gap-2">
+									<Play className="h-5 w-5 text-purple-500" />
+									<span className="font-mono">{show.number_of_episodes}</span>
+								</div>
 							</div>
 						</div>
+
+						{/* Add QuickAddToList here */}
+						<QuickAddToList
+							showId={show.id}
+							onSuccess={() => {
+								showToast("Show added to list", "success");
+							}}
+						/>
 					</div>
 
 					{/* Show Info */}
@@ -129,10 +133,8 @@ export function ShowDetails({ showId }: ShowDetailsProps) {
 								<span className="text-base md:text-xl font-bold">{show.vote_average?.toFixed(1)}</span>
 							</div>
 						</div>
-
 						{/* Tagline */}
-						<p className="mb-4 font-mono text-sm italic text-gray-600">"{show.tagline}"</p>
-
+						{show.tagline && <p className="mb-4 font-mono text-sm italic text-gray-600">"{show.tagline}"</p>}
 						{/* Overview */}
 						<div className="mb-4">
 							<button
@@ -146,7 +148,6 @@ export function ShowDetails({ showId }: ShowDetailsProps) {
 								{showSpoilers ? show.overview : 'Overview hidden to prevent spoilers. Click "Show Spoilers" to reveal.'}
 							</p>
 						</div>
-
 						{/* Show Stats Grid */}
 						<div className="mb-4 grid grid-cols-2 gap-4 md:grid-cols-3 text-center sm:text-left text-sm sm:text-base">
 							{/* Status */}
@@ -173,14 +174,13 @@ export function ShowDetails({ showId }: ShowDetailsProps) {
 								<div className="flex items-center gap-2 flex-col sm:flex-row">
 									<Globe className="h-5 w-5 text-purple-500" />
 									<Link href={show.homepage} target="_blank" className="group">
-										<span className="font-bold flex-row flex items-center gap-2 group-hover:text-purple-500 transition">
+										<span className="font-bold flex flex-col sm:flex-row items-center gap-2 group-hover:text-purple-500 transition">
 											{show.networks[0]?.name} <ExternalLink className="h-4 w-4" />
 										</span>
 									</Link>
 								</div>
 							</div>
 						</div>
-
 						{/* Genres */}
 						<div className="mb-4">
 							<h3 className="mb-2 font-bold text-purple-600">Genres</h3>
@@ -195,11 +195,10 @@ export function ShowDetails({ showId }: ShowDetailsProps) {
 								))}
 							</div>
 						</div>
-
 						{/* Watch Status */}
 						<div className="mb-4">
 							<h3 className="mb-2 font-bold text-purple-600">Watch Status</h3>
-							<div className="flex items-center gap-4">
+							<div className="flex gap-6 flex-col ">
 								<WatchStatus
 									showId={show.id}
 									initialStatus={show.userData?.watchStatus?.status}
@@ -229,38 +228,6 @@ export function ShowDetails({ showId }: ShowDetailsProps) {
 										}
 									}}
 								/>
-								{/* Add QuickAddToList here */}
-								<QuickAddToList
-									showId={show.id}
-									onSuccess={() => {
-										// Optionally show a toast notification
-										// We'd need to add a toast system if not already present
-									}}
-								/>
-							</div>
-						</div>
-						{/* Watch Info */}
-						<div className="mt-auto grid grid-cols-1 gap-4 md:grid-cols-2">
-							{/* Binge Time */}
-							<div className="rounded-lg border-2 border-purple-300 bg-white/50 p-4">
-								<h3 className="mb-2 font-bold text-purple-600">Binge Time</h3>
-								<div className="flex items-center gap-2">
-									<Clock className="h-5 w-5 text-purple-500" />
-									<span className="font-mono">
-										{calculateBingeTime(show.seasons.flatMap((s: any) => s.episodes || []))}
-									</span>
-								</div>
-							</div>
-
-							{/* Episode Count */}
-							<div className="rounded-lg border-2 border-purple-300 bg-white/50 p-4">
-								<h3 className="mb-2 font-bold text-purple-600">Episodes</h3>
-								<div className="flex items-center gap-2">
-									<Play className="h-5 w-5 text-purple-500" />
-									<span className="font-mono">
-										{show.number_of_episodes} episodes in {show.number_of_seasons} seasons
-									</span>
-								</div>
 							</div>
 						</div>
 
@@ -275,29 +242,8 @@ export function ShowDetails({ showId }: ShowDetailsProps) {
 				</div>
 			</div>
 
-			{/* Created By Section */}
-			{show.created_by.length > 0 && (
-				<div className="mt-8 rounded-xl border-4 border-white/50 bg-gradient-to-r from-pink-200 via-purple-200 to-cyan-200 p-6 shadow-xl backdrop-blur-lg">
-					<h2 className="mb-4 text-xl font-black uppercase tracking-wider">Created By</h2>
-					<div className="flex flex-wrap gap-4">
-						{show.created_by.map((creator: any) => (
-							<div key={creator.id} className="flex items-center gap-3">
-								{creator.profile_path && (
-									<img
-										src={getTMDBImageUrl(creator.profile_path, "poster", "small")!}
-										alt={creator.name}
-										className="h-12 w-12 rounded-full object-cover"
-									/>
-								)}
-								<span className="font-bold">{creator.name}</span>
-							</div>
-						))}
-					</div>
-				</div>
-			)}
-
 			{/* Seasons List */}
-			<div className="mt-8 space-y-4">
+			<div className="mt-8 space-y-4 z-10 relative">
 				{show.seasons?.map((season: any) => (
 					<div
 						key={season.id}
@@ -324,11 +270,13 @@ export function ShowDetails({ showId }: ShowDetailsProps) {
 										}}
 										className="relative rounded-lg overflow-hidden"
 									>
-										<img
-											src={getTMDBImageUrl(season.poster_path, "poster", "small")!}
-											alt={season.name}
-											className="h-20 w-14 rounded-lg object-cover"
-										/>
+										{season.poster_path && (
+											<img
+												src={getTMDBImageUrl(season.poster_path, "poster", "small")!}
+												alt={season.name}
+												className="h-20 w-14 rounded-lg object-cover"
+											/>
+										)}
 									</motion.div>
 									{expandedSeasons[season.season_number] && (
 										<motion.div
@@ -482,6 +430,10 @@ export function ShowDetails({ showId }: ShowDetailsProps) {
 																seasonId={season.id}
 																episodeId={episode.id}
 																initialWatched={episode.userData?.watched}
+																posterPath={show.poster_path}
+																episodeNumber={episode.episode_number}
+																seasonNumber={season.season_number}
+																showName={show.name}
 															/>
 														</div>
 														{/* Episode Reviews Component */}

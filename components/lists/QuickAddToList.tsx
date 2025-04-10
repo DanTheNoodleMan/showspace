@@ -138,10 +138,10 @@ export function QuickAddToList({ showId, onAdd, onSuccess }: QuickAddToListProps
 	}
 
 	return (
-		<div className="relative">
+		<div className="relative w-full">
 			<button
 				onClick={() => setIsOpen(!isOpen)}
-				className="flex items-center gap-2 rounded-full bg-purple-100 px-4 py-2 font-bold text-purple-600 hover:bg-purple-200 cursor-pointer"
+				className="w-full flex items-center gap-2 rounded-lg px-4 py-2 font-bold transition cursor-pointer border-2 border-purple-300 bg-white/50 text-purple-600 hover:bg-purple-100"
 			>
 				<ListPlus className="h-4 w-4" />
 				Add to List
@@ -164,7 +164,7 @@ export function QuickAddToList({ showId, onAdd, onSuccess }: QuickAddToListProps
 							initial={{ opacity: 0, y: 10 }}
 							animate={{ opacity: 1, y: 0 }}
 							exit={{ opacity: 0, y: 10 }}
-							className="absolute right-0 top-full mt-2 z-50 w-64 rounded-xl border-4 border-white/50 bg-white/90 p-2 shadow-xl backdrop-blur-lg"
+							className="absolute left-0 top-full mt-1 z-100 w-64 rounded-xl border-4 border-white/50 bg-white/90 p-2 shadow-xl "
 						>
 							{loading ? (
 								<div className="flex items-center justify-center p-4">

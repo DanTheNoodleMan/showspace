@@ -58,7 +58,7 @@ export function StatsGrid({ stats, className = "", username }: StatsGridProps) {
 	];
 
 	return (
-		<div className={`grid grid-cols-2 gap-4 ${className}`}>
+		<div className={`grid grid-cols-2 gap-4 h-fit ${className}`}>
 			{statItems.map((item, index) => (
 				<Link href={item.href} key={item.label}>
 					<motion.div

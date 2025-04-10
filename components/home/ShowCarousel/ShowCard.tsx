@@ -4,7 +4,6 @@ import { getTMDBImageUrl } from "@/config/tmdb";
 import { Star } from "lucide-react";
 import * as Flags from "country-flag-icons/react/3x2";
 import { useRouter } from "next/navigation";
-import { QuickAddToList } from "@/components/lists/QuickAddToList";
 
 interface ShowCardProps {
 	show: Show;
