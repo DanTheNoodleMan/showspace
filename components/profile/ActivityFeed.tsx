@@ -9,16 +9,21 @@ import Link from "next/link";
 interface Activity {
 	id: string;
 	type: "WATCHED" | "REVIEWED" | "CREATED_LIST";
+
 	show?: string;
-	show_name?: string;
+	show_name?: string | null;
+
 	timestamp: Date;
+
 	rating?: number | null;
 	content?: string;
-	title?: string;
+
+	title?: string;	
 	showCount?: number;
-	season_number?: number;
-	episode_number?: number;
-	poster_path?: string;
+
+	season_number?: number | null;
+	episode_number?: number | null;
+	poster_path?: string | null;
 }
 
 interface ActivityFeedProps {

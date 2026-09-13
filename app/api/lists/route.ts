@@ -102,7 +102,9 @@ export async function PUT(request: Request) {
 		const { data: updatedList, error } = await supabase
 			.from("lists")
 			.update({
-				...data,
+				title: data.title,
+				description: data.description,
+				is_private: data.isPrivate,
 				updated_at: new Date().toISOString(),
 			})
 			.eq("id", id)

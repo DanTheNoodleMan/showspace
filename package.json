@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@supabase/ssr": "^0.5.2",
+    "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.48.1",
     "@tailwindcss/postcss": "^4.0.6",
     "@types/lodash": "^4.17.15",
@@ -19,7 +19,7 @@
     "framer-motion": "^12.4.7",
     "lodash": "^4.17.21",
     "lucide-react": "^0.475.0",
-    "next": "^15.2.4",
+    "next": "^16.3.5",
     "rc-slider": "^11.1.8",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
